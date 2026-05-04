@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(polca LANGUAGES CXX)
+project(pypolca LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,3 +26,6 @@ FetchContent_MakeAvailable(pybind11)
 
 # --- Build C++ code ---
 add_subdirectory(src/cpp)
+
+add_executable(tryout ${CMAKE_SOURCE_DIR}/examples/tryout.cpp)
+target_link_libraries(tryout PRIVATE pypolca_core)

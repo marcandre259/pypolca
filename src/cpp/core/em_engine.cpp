@@ -1,11 +1,11 @@
-#include "polca/em_engine.h"
-#include "polca/math_ops.h"
+#include "pypolca/em_engine.h"
+#include "pypolca/math_ops.h"
 #include <cmath>
 #include <iostream>
 #include <random>
 #include <limits>
 
-namespace polca {
+namespace pypolca {
 
 // TODO: Implement random initialization of vecprobs
 static Eigen::VectorXd random_init_probs(const std::vector<int>& num_choices,
@@ -74,4 +74,4 @@ Results fit_em(const Data& data,
     return res;
 }
 
-} // namespace polca
+} // namespace pypolca

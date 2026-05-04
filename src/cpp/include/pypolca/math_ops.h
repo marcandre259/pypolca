@@ -1,10 +1,10 @@
 #pragma once
 
-#include "polca/types.h"
+#include "pypolca/types.h"
 #include <Eigen/Dense>
 #include <utility>
 
-namespace polca {
+namespace pypolca {
 
 /**
  * Compute class-conditional response likelihoods P(y_i | class = r).
@@ -66,4 +66,4 @@ Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd& x,
                                         const Eigen::VectorXd& beta,
                                         int nclass);
 
-} // namespace polca
+} // namespace pypolca

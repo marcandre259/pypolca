@@ -1,8 +1,8 @@
 #pragma once
 
-#include "polca/types.h"
+#include "pypolca/types.h"
 
-namespace polca {
+namespace pypolca {
 
 /**
  * Fit a latent class model via EM (and Newton-Raphson for covariates).
@@ -24,4 +24,4 @@ Results fit_em(const Data& data,
                const Eigen::VectorXd& probs_start = Eigen::VectorXd(),
                const Eigen::VectorXd& beta_start = Eigen::VectorXd());
 
-} // namespace polca
+} // namespace pypolca

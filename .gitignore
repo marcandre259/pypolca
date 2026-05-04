@@ -1,0 +1,34 @@
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.dylib
+*.dll
+
+# uv
+.venv/
+uv.lock
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local-only scripts
+rebuild.sh
+
+# Agent instructions (local-only)
+AGENTS.md

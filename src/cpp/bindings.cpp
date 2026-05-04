@@ -2,42 +2,43 @@
 #include <pybind11/eigen.h>
 #include <pybind11/stl.h>
 
-#include "polca/types.h"
-#include "polca/em_engine.h"
+#include "pypolca/types.h"
+#include "pypolca/em_engine.h"
+#include "pypolca/math_ops.h"
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(_core, m) {
-    m.doc() = "C++ core for poLCA (Polytomous Variable Latent Class Analysis)";
+    m.doc() = "C++ core for pypoLCA (Polytomous Variable Latent Class Analysis)";
 
     // --- Data struct ---
-    py::class_<polca::Data>(m, "Data")
+    py::class_<pypolca::Data>(m, "Data")
         .def(py::init<>())
-        .def_readwrite("y", &polca::Data::y, "N x J response matrix (1-based, 0=missing)")
-        .def_readwrite("x", &polca::Data::x, "N x S covariate matrix")
-        .def_readwrite("num_choices", &polca::Data::num_choices, "Categories per item")
-        .def("n_obs", &polca::Data::n_obs)
-        .def("n_items", &polca::Data::n_items)
-        .def("n_covariates", &polca::Data::n_covariates);
+        .def_readwrite("y", &pypolca::Data::y, "N x J response matrix (1-based, 0=missing)")
+        .def_readwrite("x", &pypolca::Data::x, "N x S covariate matrix")
+        .def_readwrite("num_choices", &pypolca::Data::num_choices, "Categories per item")
+        .def("n_obs", &pypolca::Data::n_obs)
+        .def("n_items", &pypolca::Data::n_items)
+        .def("n_covariates", &pypolca::Data::n_covariates);
 
     // --- Params struct ---
-    py::class_<polca::Params>(m, "Params")
+    py::class_<pypolca::Params>(m, "Params")
         .def(py::init<>())
-        .def_readwrite("vecprobs", &polca::Params::vecprobs)
-        .def_readwrite("beta", &polca::Params::beta);
+        .def_readwrite("vecprobs", &pypolca::Params::vecprobs)
+        .def_readwrite("beta", &pypolca::Params::beta);
 
     // --- Results struct ---
-    py::class_<polca::Results>(m, "Results")
-        .def_readonly("params", &polca::Results::params)
-        .def_readonly("posterior", &polca::Results::posterior, "N x nclass posterior probs")
-        .def_readonly("prior", &polca::Results::prior, "N x nclass prior probs")
-        .def_readonly("loglik", &polca::Results::loglik)
-        .def_readonly("iterations", &polca::Results::iterations)
-        .def_readonly("converged", &polca::Results::converged);
+    py::class_<pypolca::Results>(m, "Results")
+        .def_readonly("params", &pypolca::Results::params)
+        .def_readonly("posterior", &pypolca::Results::posterior, "N x nclass posterior probs")
+        .def_readonly("prior", &pypolca::Results::prior, "N x nclass prior probs")
+        .def_readonly("loglik", &pypolca::Results::loglik)
+        .def_readonly("iterations", &pypolca::Results::iterations)
+        .def_readonly("converged", &pypolca::Results::converged);
 
     // --- fit_em ---
     m.def("fit_em",
-          &polca::fit_em,
+          &pypolca::fit_em,
           py::arg("data"),
           py::arg("nclass"),
           py::arg("maxiter") = 1000,
@@ -50,7 +51,7 @@ PYBIND11_MODULE(_core, m) {
 
           Parameters
           ----------
-          data : polca.Data
+          data : pypolca.Data
               Input data container.
           nclass : int
               Number of latent classes.
@@ -67,18 +68,38 @@ PYBIND11_MODULE(_core, m) {
 
           Returns
           -------
-          polca.Results
+          pypolca.Results
               Fitted model results.
           )pbdoc");
 
     // --- Expose math helpers for unit testing ---
     m.def("compute_ylik",
-          &polca::compute_ylik,
+          &pypolca::compute_ylik,
           py::arg("data"), py::arg("params"), py::arg("nclass"),
           "Compute class-conditional likelihoods (N x nclass).");
 
+    m.def("e_step",
+          &pypolca::e_step,
+          py::arg("data"), py::arg("params"), py::arg("prior"), py::arg("nclass"),
+          "E-step: compute posterior class membership probabilities (N x nclass).");
+
+    m.def("m_step_probs",
+          &pypolca::m_step_probs,
+          py::arg("data"), py::arg("posterior"), py::arg("num_choices"), py::arg("nclass"),
+          "M-step: update class-conditional response probabilities.");
+
+    m.def("compute_beta_derivatives",
+          &pypolca::compute_beta_derivatives,
+          py::arg("data"), py::arg("posterior"), py::arg("prior"), py::arg("beta"), py::arg("nclass"),
+          "Compute gradient and observed information for Newton-Raphson.");
+
+    m.def("update_beta",
+          &pypolca::update_beta,
+          py::arg("data"), py::arg("posterior"), py::arg("prior"), py::arg("beta"), py::arg("nclass"),
+          "Single Newton-Raphson step for beta. Returns (new_beta, new_prior).");
+
     m.def("compute_prior_from_beta",
-          &polca::compute_prior_from_beta,
+          &pypolca::compute_prior_from_beta,
           py::arg("x"), py::arg("beta"), py::arg("nclass"),
           "Build prior matrix from beta via softmax.");
 }

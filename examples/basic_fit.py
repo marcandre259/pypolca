@@ -1,10 +1,10 @@
 """Example: fit a basic latent class model with pypoLCA."""
 
 import numpy as np
-import pandas as pd
+import polars as pl
 
 # Import the low-level C++ bindings directly
-from polca._core import Data, fit_em
+from pypolca._core import Data, fit_em
 
 # --- Create synthetic data ---
 np.random.seed(42)
@@ -49,11 +49,11 @@ print(f"Predclass counts: {np.bincount(result.posterior.argmax(axis=1))}")
 
 # --- Try the high-level API ---
 try:
-    from polca.api import fit
+    from pypolca.api import fit
 
-    df = pd.DataFrame(
+    df = pl.DataFrame(
         y,
-        columns=[f"Y{j+1}" for j in range(J)],
+        schema=[f"Y{j + 1}" for j in range(J)],
     )
     result2 = fit("Y1 + Y2 + Y3 + Y4 ~ 1", df, nclass=2, verbose=False)
     print(f"\nHigh-level API result: {result2}")

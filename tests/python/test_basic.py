@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from polca._core import Data, fit_em, compute_ylik, compute_prior_from_beta
+from pypolca._core import Data, fit_em, compute_ylik, compute_prior_from_beta
 
 
 class TestMathOps:
@@ -16,7 +16,7 @@ class TestMathOps:
         data.x = np.ones((2, 1), dtype=np.float64)
         data.num_choices = [2, 2]
 
-        from polca._core import Params
+        from pypolca._core import Params
         p = Params()
         p.vecprobs = np.ones(8, dtype=np.float64) * 0.5
         p.beta = np.array([], dtype=np.float64)

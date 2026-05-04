@@ -3,10 +3,10 @@
 import re
 from typing import Tuple, List
 import numpy as np
-import pandas as pd
+import polars as pl
 
 
-def build_design_matrix(formula: str, data: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, List[int]]:
+def build_design_matrix(formula: str, data: pl.DataFrame) -> Tuple[np.ndarray, np.ndarray, List[int]]:
     """Parse a simple formula and build design matrices.
 
     Supports:
@@ -32,7 +32,7 @@ def build_design_matrix(formula: str, data: pd.DataFrame) -> Tuple[np.ndarray, n
     else:
         y_names = [v.strip() for v in lhs.split("+")]
 
-    y = data[y_names].values.astype(np.int32)
+    y = data[y_names].to_numpy().astype(np.int32)
 
     # Determine number of choices per item
     num_choices = []
@@ -48,7 +48,7 @@ def build_design_matrix(formula: str, data: pd.DataFrame) -> Tuple[np.ndarray, n
         x = np.ones((y.shape[0], 1), dtype=np.float64)
     else:
         x_names = [v.strip() for v in rhs.split("+")]
-        x = data[x_names].values.astype(np.float64)
+        x = data[x_names].to_numpy().astype(np.float64)
         # Prepend intercept
         intercept = np.ones((x.shape[0], 1), dtype=np.float64)
         x = np.hstack([intercept, x])

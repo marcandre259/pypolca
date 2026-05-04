@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <vector>
 
-namespace polca {
+namespace pypolca {
 
 /**
  * Input data container.
@@ -51,4 +51,4 @@ struct Results {
     // Eigen::MatrixXd coeff_se;               // SE of beta coefficients
 };
 
-} // namespace polca
+} // namespace pypolca

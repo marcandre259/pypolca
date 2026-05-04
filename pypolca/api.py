@@ -2,10 +2,10 @@
 
 from typing import Optional
 import numpy as np
-import pandas as pd
+import polars as pl
 
-from polca._core import Data, fit_em
-from polca.utils import build_design_matrix
+from pypolca._core import Data, fit_em
+from pypolca.utils import build_design_matrix
 
 
 class LCAResult:
@@ -68,7 +68,7 @@ class LCAResult:
 
 def fit(
     formula: str,
-    data: pd.DataFrame,
+    data: pl.DataFrame,
     nclass: int = 2,
     maxiter: int = 1000,
     tol: float = 1e-10,
@@ -107,7 +107,7 @@ def fit(
         Fitted model result object.
     """
     if na_rm:
-        data = data.dropna()
+        data = data.drop_nulls()
 
     # Parse formula to get y and x matrices
     y_mat, x_mat, num_choices = build_design_matrix(formula, data)
