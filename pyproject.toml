@@ -37,7 +37,7 @@ dev = [
 minimum-version = "0.5"
 build-dir = "build/{wheel_tag}"
 cmake.verbose = true
-cmake.args = ["-GNinja"]
+cmake.args = ["-GNinja", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]

@@ -72,8 +72,12 @@ $$\pi_{r}^{\text{new}} = \frac{1}{N} \sum_{i=1}^{N} w_{ir}.$$
 When covariates are present ($S>1$), the $\beta$ parameters do **not** have a closed-form M-step. Instead, the algorithm takes **one Newton-Raphson step** on the observed log-likelihood, holding the current posteriors $w_{ir}$ fixed from the E-step. This is a **GEM (Generalized EM)** strategy: a single step is cheaper than a full inner optimization and is sufficient to increase the observed log-likelihood at most iterations. Although $w_{ir}$ are treated as constants during the derivative computation, the formulas below (via Louis's identity) yield the **exact** gradient and observed information of the true marginal log-likelihood at the current parameter values.  The precise sense in which this step generalizes (and departs from) a standard EM M-step is explained in §2.5.
 
 #### Gradient
-The gradient of the observed log-likelihood with respect to $\boldsymbol{\beta}_r$ ($r = 2, \dots, R$) is
+The gradient of the observed log-likelihood with respect to $\boldsymbol{\beta}_r$ is defined only for $r = 2, \dots, R$:
 $$\mathbf{g}_r = \frac{\partial \ell}{\partial \boldsymbol{\beta}_r} = \sum_{i=1}^{N} \mathbf{x}_i \, (w_{ir} - \pi_{ir}).$$
+
+> **Why does the index start at $r=2$ instead of $r=1$?**  
+> The multinomial logit is over-parameterized: adding the same vector to every $\boldsymbol{\beta}_r$ leaves all class probabilities unchanged. To identify the model, class 1 is chosen as the **reference category** and its coefficients are pinned to zero ($\boldsymbol{\beta}_1 \equiv \mathbf{0}$). Only the $R-1$ contrasts $(\boldsymbol{\beta}_2, \dots, \boldsymbol{\beta}_R)$ are free parameters, so the derivative is taken with respect to these $R-1$ blocks. This is exactly analogous to the baseline-category parameterization in standard multinomial logistic regression.
+
 Stacking all $(R-1)$ blocks gives $\mathbf{g} \in \mathbb{R}^{S(R-1)}$. Intuitively, each term is a *prediction error* pushing the model's predicted prior $\pi_{ir}$ toward the posterior target $w_{ir}$, analogous to weighted logistic regression.
 
 **Code:** Computed in C function `d2lldbeta2` (`src/poLCA.c`) and returned via `poLCA.dLL2dBeta.C`.

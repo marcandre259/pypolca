@@ -1,6 +1,5 @@
 #include "pypolca/math_ops.h"
 #include "Eigen/src/Core/Matrix.h"
-#include <cmath>
 #include <iostream>
 
 namespace pypolca {
@@ -78,7 +77,7 @@ Eigen::VectorXd m_step_probs(const Data &data, const Eigen::MatrixXd &posterior,
 
   int total_choices = 0;
   for (int k : num_choices) {
-      total_choices += k;
+    total_choices += k;
   }
 
   Eigen::VectorXd vecprobs;
@@ -91,52 +90,64 @@ Eigen::VectorXd m_step_probs(const Data &data, const Eigen::MatrixXd &posterior,
       int current_choices = num_choices[j];
       for (int k = 0; k < current_choices; k++) {
         for (int i = 0; i < N; i++) {
-            int value = y(i, j);
-            if (value == k + 1) {
-                vecprobs(r * total_choices + pos + k) += posterior(i, r);
-            }
+          int value = y(i, j);
+          if (value == k + 1) {
+            vecprobs(r * total_choices + pos + k) += posterior(i, r);
+          }
         }
         vecprobs(r * total_choices + pos + k) /= sum_posteriors;
-        pos += current_choices;
       }
+      pos += current_choices;
     }
   }
 
   return vecprobs;
 }
 
-// TODO: Implement compute_prior_from_beta
 // Multinomial logit (softmax) prior.
 Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd &x,
                                         const Eigen::VectorXd &beta,
                                         int nclass) {
-  (void)beta;
   const int N = x.rows();
+  const int M = x.cols();
+
+  Eigen::Map<const Eigen::MatrixXd> beta_mat(beta.data(), M, nclass - 1);
 
   if (nclass == 1) {
     return Eigen::MatrixXd::Ones(N, 1);
   }
 
-  // STUB: equal priors
-  return Eigen::MatrixXd::Ones(N, nclass) / nclass;
+  Eigen::MatrixXd priors(N, nclass);
+
+  for (int i = 0; i < N; i++) {
+    Eigen::VectorXd eta = x.row(i) * beta_mat;
+    double max_eta = fmax(0.0, eta.maxCoeff());
+
+    double denom = exp(-max_eta);
+
+    for (int r = 0; r < nclass - 1; r++) {
+        denom += exp(eta[r] - max_eta);
+    }
+
+    priors(i, 0) = exp(-max_eta) / denom;
+
+    for (int r = 1; r < nclass; r++) {
+        priors(i, r) = exp(eta(r - 1) - max_eta) / denom;
+    }
+  }
+
+  return priors;
 }
 
-// TODO: Implement compute_beta_derivatives
 // Gradient and observed information for Newton-Raphson.
 std::pair<Eigen::VectorXd, Eigen::MatrixXd>
 compute_beta_derivatives(const Data &data, const Eigen::MatrixXd &posterior,
                          const Eigen::MatrixXd &prior,
                          const Eigen::VectorXd &beta, int nclass) {
-  (void)data;
-  (void)posterior;
-  (void)prior;
-  (void)beta;
-  (void)nclass;
 
   const int S = data.n_covariates();
   const int rank = S * (nclass - 1);
 
-  // STUB
   return {Eigen::VectorXd::Zero(rank), Eigen::MatrixXd::Identity(rank, rank)};
 }
 
