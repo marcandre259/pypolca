@@ -1,12 +1,13 @@
 #include "pypolca/math_ops.h"
 #include "Eigen/src/Core/Matrix.h"
-#include <iostream>
+#include "Eigen/src/Core/util/Constants.h"
+#include <limits>
 
 namespace pypolca {
 
 // P(y_i | class = r) for all i, r.
 // Need to figure out how to deal with underflow: sum-log-exp trick?
-Eigen::MatrixXd compute_ylik(const Data &data, const Params &p, int nclass) {
+Eigen::MatrixXd compute_log_ylik(const Data &data, const Params &p, int nclass) {
   const int N = data.n_obs();
   const int R = nclass;
 
@@ -19,8 +20,8 @@ Eigen::MatrixXd compute_ylik(const Data &data, const Params &p, int nclass) {
     sum_choices += data.num_choices[j];
   }
 
-  Eigen::MatrixXd ylik(N, R);
-  ylik.setOnes();
+  Eigen::MatrixXd log_ylik(N, R);
+  log_ylik.setZero();
 
   for (int i = 0; i < N; i++) {
     for (int r = 0; r < R; r++) {
@@ -33,8 +34,13 @@ Eigen::MatrixXd compute_ylik(const Data &data, const Params &p, int nclass) {
           int idx = r * sum_choices + current_choice_pos;
           double prob_rjk = vecprobs(idx);
           if (obs_value == k + 1) {
+              if (prob_rjk <= 0) {
+                log_ylik(i, r) = -std::numeric_limits<double>::infinity();
+              }
+              else {
             // Don't forget multiplication for each j of M
-            ylik(i, r) *= prob_rjk;
+                log_ylik(i, r) += std::log(prob_rjk);
+              }
           }
           current_choice_pos++;
         }
@@ -42,7 +48,19 @@ Eigen::MatrixXd compute_ylik(const Data &data, const Params &p, int nclass) {
     }
   }
 
-  return ylik;
+  return log_ylik;
+}
+
+double compute_logsumexp(Eigen::VectorXd x) {
+    double max_x = x.maxCoeff();
+    int N = x.size();
+    double sum = 0.0;
+
+    for (int i = 0; i < N; i++) {
+        sum += exp(x(i) - max_x);
+    }
+
+    return max_x + std::log(sum);
 }
 
 // Posterior class membership probabilities.
@@ -51,16 +69,20 @@ Eigen::MatrixXd e_step(const Data &data, const Params &p,
   const int N = data.n_obs();
   const int R = nclass;
 
-  Eigen::MatrixXd ylik = compute_ylik(data, p, nclass);
+  Eigen::MatrixXd log_ylik = compute_log_ylik(data, p, nclass);
 
   Eigen::MatrixXd posterior(N, nclass);
+  Eigen::VectorXd log_nums(nclass);
 
   for (int i = 0; i < N; i++) {
-    Eigen::VectorXd current_ylik = ylik.row(i);
-    Eigen::VectorXd current_prior = prior.row(i);
-    double denom = current_prior.dot(current_ylik);
     for (int r = 0; r < R; r++) {
-      posterior(i, r) = current_prior(r) * current_ylik(r) / denom;
+        double log_prior = std::log(prior(i, r));
+        double log_num = log_prior + log_ylik(i, r);
+        log_nums(r) = log_num;
+    }
+    double log_denom = compute_logsumexp(log_nums);
+    for (int r = 0; r < R; r++) {
+        posterior(i, r) = std::exp(log_nums(r) - log_denom);
     }
   }
 
@@ -126,13 +148,13 @@ Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd &x,
     double denom = exp(-max_eta);
 
     for (int r = 0; r < nclass - 1; r++) {
-        denom += exp(eta[r] - max_eta);
+      denom += exp(eta[r] - max_eta);
     }
 
     priors(i, 0) = exp(-max_eta) / denom;
 
     for (int r = 1; r < nclass; r++) {
-        priors(i, r) = exp(eta(r - 1) - max_eta) / denom;
+      priors(i, r) = exp(eta(r - 1) - max_eta) / denom;
     }
   }
 
@@ -140,31 +162,67 @@ Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd &x,
 }
 
 // Gradient and observed information for Newton-Raphson.
-std::pair<Eigen::VectorXd, Eigen::MatrixXd>
-compute_beta_derivatives(const Data &data, const Eigen::MatrixXd &posterior,
-                         const Eigen::MatrixXd &prior,
-                         const Eigen::VectorXd &beta, int nclass) {
+std::pair<Eigen::VectorXd, Eigen::MatrixXd> compute_beta_derivatives(
+    const Data &data,
+    const Eigen::MatrixXd &posterior,
+    const Eigen::MatrixXd &prior,
+    const Eigen::VectorXd &beta, int nclass
+) {
 
-  const int S = data.n_covariates();
-  const int rank = S * (nclass - 1);
+  int N = data.n_obs();
+  int M = data.n_covariates();
+  int rank = M * (nclass - 1);
 
-  return {Eigen::VectorXd::Zero(rank), Eigen::MatrixXd::Identity(rank, rank)};
+  Eigen::MatrixXd x = data.x;
+
+  Eigen::VectorXd gradients(rank);
+  gradients.setZero();
+  Eigen::MatrixXd hessians(rank, rank);
+  hessians.setZero();
+
+  for (int i = 0; i < N; i++) {
+      for(int m = 0; m < M; m++) {
+          for(int r = 1; r < nclass; r++) {
+              int row = M * (r - 1) + m;
+              gradients(row) += x(i, m) * (posterior(i, r) - prior(i, r));
+              for(int l = 0; l < M; l++) {
+                  int col = M * (r - 1) + l;
+                  hessians(row, col) += x(i, m) * x(i, l) * (-1.0 * posterior(i, r) * (1 - posterior(i, r)) + prior(i, r) * (1 - prior(i, r)));
+                  for(int s = 1; s < r; s++) {
+                      int col2 = M * (s - 1) + l;
+                      hessians(row, col2) += x(i, m) * x(i, l) * (-1.0 * prior(i, r) * prior(i, s) + posterior(i, r) * posterior(i, s));
+                  }
+              }
+          }
+      }
+  }
+
+  hessians.triangularView<Eigen::StrictlyUpper>() = hessians.transpose();
+
+
+  return {gradients, hessians};
 }
 
-// TODO: Implement update_beta
 // Single Newton-Raphson step.
-std::pair<Eigen::VectorXd, Eigen::MatrixXd>
-update_beta(const Data &data, const Eigen::MatrixXd &posterior,
-            const Eigen::MatrixXd &prior, const Eigen::VectorXd &beta,
-            int nclass) {
-  (void)data;
-  (void)posterior;
-  (void)prior;
-  (void)beta;
-  (void)nclass;
+std::pair<Eigen::VectorXd, Eigen::MatrixXd> update_beta(
+    const Data &data,
+    const Eigen::MatrixXd &posterior,
+    const Eigen::MatrixXd &prior,
+    const Eigen::VectorXd &beta,
+    int nclass
+) {
+    Eigen::MatrixXd x = data.x;
+    int M = data.n_covariates();
 
-  // STUB
-  return {beta, prior};
+    auto [gradients, hessians] = compute_beta_derivatives(data, posterior, prior, beta, nclass);
+
+    Eigen::VectorXd updated_beta(beta.size());
+
+    updated_beta = beta + hessians.ldlt().solve(gradients);
+
+    Eigen::MatrixXd updated_prior = compute_prior_from_beta(x, updated_beta, nclass);
+
+    return {updated_beta, updated_prior};
 }
 
 } // namespace pypolca

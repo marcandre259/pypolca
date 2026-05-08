@@ -9,7 +9,7 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(_core, m) {
-    m.doc() = "C++ core for pypoLCA (Polytomous Variable Latent Class Analysis)";
+    m.doc() = "C++ core for pypolca (Polytomous Variable Latent Class Analysis)";
 
     // --- Data struct ---
     py::class_<pypolca::Data>(m, "Data")
@@ -74,7 +74,7 @@ PYBIND11_MODULE(_core, m) {
 
     // --- Expose math helpers for unit testing ---
     m.def("compute_ylik",
-          &pypolca::compute_ylik,
+          &pypolca::compute_log_ylik,
           py::arg("data"), py::arg("params"), py::arg("nclass"),
           "Compute class-conditional likelihoods (N x nclass).");
 

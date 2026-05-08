@@ -137,6 +137,37 @@ Eigen::VectorXd v(3);
 v = 1.0;                  // every entry becomes 1.0
 ```
 
+### Whole rows or columns
+
+```cpp
+Eigen::MatrixXd m(3, 3);
+m.setZero();
+
+// Assign a vector to a column (VectorXd)
+Eigen::VectorXd col_vec(3);
+col_vec << 1, 2, 3;
+m.col(0) = col_vec;       // first column becomes [1, 2, 3]
+
+// Assign a vector to a row (needs transpose — row() returns a row vector)
+Eigen::VectorXd row_vec(3);
+row_vec << 4, 5, 6;
+m.row(1) = row_vec.transpose();   // second row becomes [4, 5, 6]
+
+// Comma initializer also works directly on rows / columns
+m.row(2) << 7, 8, 9;      // third row
+m.col(1) << 10, 11, 12;   // second column
+
+// Scalar fill on a single row / column
+m.row(0).setOnes();
+m.col(2).setConstant(3.14);
+m.row(1).setZero();
+
+// Expressions and function results work too (as long as the size matches)
+m.col(0) = some_function_returning_vector();           // column ← VectorXd
+m.row(2) = (v1 + v2).transpose();                      // row ← row vector expression
+m.col(1) = Eigen::VectorXd::LinSpaced(3, 0.0, 2.0);    // generated in-place
+```
+
 ---
 
 ## Slicing / Indexing
@@ -249,6 +280,35 @@ std::complex<double> r1 = u.dot(v);               // conj(u) · v
 std::complex<double> r2 = u.cwiseProduct(v).sum(); // u · v (no conj)
 ```
 
+### Cross product
+
+```cpp
+// 3D vectors → returns a vector
+Eigen::Vector3d v(1, 2, 3);
+Eigen::Vector3d w(0, 1, 2);
+Eigen::Vector3d cp = v.cross(w);   // [1, -2, 1]
+
+// 2D vectors → returns a scalar (the z-component)
+Eigen::Vector2d a(1, 2);
+Eigen::Vector2d b(0, 1);
+double cp2 = a.cross(b);           // 1
+```
+
+### Outer product
+
+Column vector × row vector (a.k.a. `x * x_t`). Use `*` with `.transpose()`:
+
+```cpp
+Eigen::Vector2d u(-1, 1);
+Eigen::Vector2d v(2, 0);
+
+Eigen::Matrix2d outer = u * v.transpose();
+// [[-2,  0],
+//  [ 2,  0]]
+```
+
+For the inner product `x_t * x`, see **Dot product** above.
+
 ### Matrix-vector / matrix-matrix multiplication
 
 ```cpp
@@ -258,6 +318,64 @@ Eigen::VectorXd x = Eigen::VectorXd::Random(3);
 Eigen::VectorXd y = A * x;        // matrix-vector
 Eigen::MatrixXd C = A * A;        // matrix-matrix
 Eigen::MatrixXd D = A.transpose() * A;  // AᵀA
+```
+
+## Triangular & Self-Adjoint Views
+
+### Extract a triangular part
+
+```cpp
+Eigen::MatrixXd m = Eigen::MatrixXd::Random(4, 4);
+
+// View the lower triangle (expression, no copy)
+auto lower = m.triangularView<Eigen::Lower>();
+
+// View the upper triangle
+auto upper = m.triangularView<Eigen::Upper>();
+
+// Strict versions exclude the diagonal
+auto strict_lower = m.triangularView<Eigen::StrictlyLower>();
+```
+
+### Lower triangular → full (dense)
+
+Assigning a `TriangularView` to a dense matrix copies the requested triangle and **zero-fills** the opposite half:
+
+```cpp
+// Upper half becomes 0
+Eigen::MatrixXd full = m.triangularView<Eigen::Lower>();
+
+// Equivalent explicit form
+Eigen::MatrixXd full = m.triangularView<Eigen::Lower>().toDenseMatrix();
+```
+
+### Fill upper triangle from lower (symmetrise in-place)
+
+You built a symmetric matrix by only writing the lower triangle (upper is still zero). Copy the lower half into the upper half.
+
+```cpp
+// Keep diagonal, overwrite strict upper with transpose of strict lower
+m.triangularView<Eigen::StrictlyUpper>() = m.transpose();
+```
+
+**Example — Hessian with zeros above diagonal:**
+```
+Before:        After:
+1  0  0        1  2  4
+2  3  0   →    2  3  5
+4  5  6        4  5  6
+```
+
+If you need a **new dense copy** instead of modifying in-place:
+```cpp
+Eigen::MatrixXd full = m.selfadjointView<Eigen::Lower>();
+```
+
+### Reconstruct full matrix from Cholesky lower factor
+
+```cpp
+Eigen::MatrixXd L = /* lower-triangular Cholesky factor */;
+Eigen::MatrixXd A = L * L.transpose();   // full symmetric reconstruction
 ```
 
 ## Reshaping & Maps
@@ -305,4 +423,6 @@ Eigen::MatrixXd m = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dyna
 | Tail | `.tail(n)` | `.bottomRows(n)` |
 | Cast | `.cast<T>()` | `.cast<T>()` |
 | Dot product | `.dot(v)` | — |
+| Cross product | `.cross(v)` | — |
+| Outer product | `u * v.transpose()` | — |
 | Multiply | — | `A * B` |

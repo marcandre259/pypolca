@@ -32,3 +32,6 @@ rebuild.sh
 
 # Agent instructions (local-only)
 AGENTS.md
+
+.cache/
+package-lock.json

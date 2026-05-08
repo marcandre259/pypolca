@@ -12,7 +12,7 @@ namespace pypolca {
  * Returns: N x nclass matrix.  Each entry is the product over items j of
  * the probability of observing y[i,j] given class r.
  */
-Eigen::MatrixXd compute_ylik(const Data& data, const Params& p, int nclass);
+Eigen::MatrixXd compute_log_ylik(const Data& data, const Params& p, int nclass);
 
 /**
  * E-step: compute posterior class membership probabilities.
