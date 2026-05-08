@@ -22,6 +22,9 @@ Eigen::MatrixXd compute_log_ylik(const Data& data, const Params& p, int nclass);
 Eigen::MatrixXd e_step(const Data& data, const Params& p,
                        const Eigen::MatrixXd& prior, int nclass);
 
+
+double compute_logsumexp(const Eigen::VectorXd& x);
+
 /**
  * M-step for response probabilities (no covariates).
  *

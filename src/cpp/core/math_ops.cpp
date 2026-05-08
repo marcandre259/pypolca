@@ -1,6 +1,7 @@
 #include "pypolca/math_ops.h"
 #include <Eigen/Dense>
 #include <limits>
+#include <stdexcept>
 
 namespace pypolca {
 
@@ -13,7 +14,7 @@ Eigen::MatrixXd compute_log_ylik(const Data &data, const Params &p,
 
   const int M = data.n_items();
 
-  const Eigen::VectorXd vecprobs = p.vecprobs;
+  const Eigen::VectorXd& vecprobs = p.vecprobs;
 
   int sum_choices = 0;
   for (int j = 0; j < M; j++) {
@@ -136,6 +137,12 @@ Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd &x,
   const int N = x.rows();
   const int M = x.cols();
 
+  if (beta.size() != (nclass - 1) * M) {
+      throw std::invalid_argument(
+          "beta size must equal (nclass - 1) * n_covariates"
+      );
+  }
+
   Eigen::Map<const Eigen::MatrixXd> beta_mat(beta.data(), M, nclass - 1);
 
   if (nclass == 1) {
@@ -181,6 +188,10 @@ compute_beta_derivatives(const Data &data, const Eigen::MatrixXd &posterior,
   Eigen::MatrixXd hessians(rank, rank);
   hessians.setZero();
 
+  if (nclass == 1) {
+      return {gradients, hessians};
+  }
+
   for (int i = 0; i < N; i++) {
     for (int m = 0; m < M; m++) {
       for (int r = 1; r < nclass; r++) {
@@ -214,7 +225,15 @@ update_beta(const Data &data, const Eigen::MatrixXd &posterior,
             const Eigen::MatrixXd &prior, const Eigen::VectorXd &beta,
             int nclass) {
   const Eigen::MatrixXd& x = data.x;
+
+
   int M = data.n_covariates();
+
+  if (beta.size() != (nclass - 1) * M) {
+      throw std::invalid_argument(
+          "beta size must equal (nclass - 1) * n_covariates"
+      );
+  }
 
   auto [gradients, hessians] =
       compute_beta_derivatives(data, posterior, prior, beta, nclass);
