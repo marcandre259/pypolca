@@ -41,6 +41,11 @@ class LCAResult:
         return self.posterior.argmax(axis=1) + 1  # 1-based class labels
 
     @property
+    def params(self):
+        """Raw fitted parameters (vecprobs, beta)."""
+        return self._raw.params
+
+    @property
     def P(self) -> np.ndarray:
         """Class population shares (marginal prior probabilities)."""
         return self.posterior.mean(axis=0)
@@ -130,7 +135,6 @@ def fit(
         nclass=nclass,
         maxiter=maxiter,
         tol=tol,
-        verbose=verbose,
         probs_start=pstart,
         beta_start=bstart,
     )

@@ -1,5 +1,5 @@
 #include "pypolca/em_engine.h"
-#include "Eigen/src/Core/Matrix.h"
+#include <Eigen/Core>
 #include "pypolca/math_ops.h"
 #include "pypolca/types.h"
 #include <cmath>
@@ -11,7 +11,7 @@ namespace pypolca {
 static Eigen::VectorXd random_init_probs(const std::vector<int>& num_choices,
                                          int nclass,
                                          unsigned int seed) {
-    int total = 0;
+    Eigen::Index total = 0;
 
     for (int k : num_choices) {
         total += k;
@@ -21,7 +21,7 @@ static Eigen::VectorXd random_init_probs(const std::vector<int>& num_choices,
     std::gamma_distribution<double> gamma(1.0, 1.0); // Exponential
 
     Eigen::VectorXd vecprobs(nclass * total);
-    int J = num_choices.size();
+    Eigen::Index J = num_choices.size();
 
     for (int r = 0; r < nclass; r++) {
         int pos = 0;
@@ -48,7 +48,6 @@ Results fit_em(
     int nclass,
     int maxiter,
     double tol,
-    bool verbose,
     const Eigen::VectorXd& probs_start,
     const Eigen::VectorXd& beta_start,
     unsigned int seed
@@ -81,9 +80,7 @@ Results fit_em(
         prior = pi.transpose().replicate(N, 1);
     }
 
-    //   5. Check convergence: |dll| < tol
-    //   6. Error trap: if (S>1 && dll < -1e-7) reject/restart
-    //
+    // EM loop: iterate until |dll| < tol, maxiter reached, or likelihood drops.
     double dll = std::numeric_limits<double>::infinity();
     double log_lik_latest = std::numeric_limits<double>::infinity();
     int n_iter = 0;
@@ -91,33 +88,37 @@ Results fit_em(
 
     Eigen::MatrixXd posterior(N, nclass);
 
-    while (std::abs(dll) < tol) {
+    while (std::abs(dll) >= tol) {
         n_iter += 1;
         double log_lik_prev = log_lik_latest;
 
         posterior = e_step(data, p, prior, nclass);
 
         p.vecprobs = m_step_probs(data, posterior, data.num_choices, nclass);
+
         if (S > 1) {
             auto result = update_beta(data, posterior, prior, p.beta, nclass);
             p.beta = result.first;
             prior = result.second;
         }
         else {
-            Eigen::VectorXd col_means(S);
-            for (int s = 0; s < S; s++) {
-                col_means(s) = posterior.col(s).mean();
+            Eigen::VectorXd col_means(nclass);
+            for (int r = 0; r < nclass; r++) {
+                col_means(r) = posterior.col(r).mean();
             }
             prior = col_means.transpose().replicate(N, 1);
         }
 
         Eigen::MatrixXd log_lik_mat = compute_log_ylik(data, p, nclass);
 
-        double log_lik_latest = 0.0;
+        log_lik_latest = 0.0;
         for (int i = 0; i < N; i++) {
+            double max_log_lik = log_lik_mat.row(i).maxCoeff();
+            double sum = 0.0;
             for (int r = 0; r < nclass; r++) {
-                log_lik_latest += log_lik_mat(i, r);
+                sum += prior(i, r) * std::exp(log_lik_mat(i, r) - max_log_lik);
             }
+            log_lik_latest += std::log(sum) + max_log_lik;
         }
 
         dll = log_lik_latest - log_lik_prev;

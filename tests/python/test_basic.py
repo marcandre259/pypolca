@@ -48,7 +48,7 @@ class TestFitEM:
         data.x = np.ones((N, 1), dtype=np.float64)
         data.num_choices = [2, 2]
 
-        res = fit_em(data, nclass=2, maxiter=5, tol=1e-6, verbose=False)
+        res = fit_em(data, nclass=2, maxiter=5, tol=1e-6)
         assert res.posterior.shape == (N, 2)
         # TODO: assert convergence behavior once EM is implemented
 

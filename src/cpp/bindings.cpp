@@ -43,9 +43,9 @@ PYBIND11_MODULE(_core, m) {
           py::arg("nclass"),
           py::arg("maxiter") = 1000,
           py::arg("tol") = 1e-10,
-          py::arg("verbose") = false,
           py::arg("probs_start") = Eigen::VectorXd(),
           py::arg("beta_start") = Eigen::VectorXd(),
+          py::arg("seed") = 42,
           R"pbdoc(
           Fit a latent class model via EM.
 
@@ -59,8 +59,6 @@ PYBIND11_MODULE(_core, m) {
               Maximum EM iterations.
           tol : float
               Convergence tolerance.
-          verbose : bool
-              Print iteration progress.
           probs_start : np.ndarray
               Optional starting values for response probabilities.
           beta_start : np.ndarray
