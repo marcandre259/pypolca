@@ -228,6 +228,8 @@ out_loglik = total_loglik;
 
 This is slightly more accurate than the current manual loop in `fit_em` because you reuse the `log_nums` you already computed.
 
+Let's take this approach.
+
 ---
 
 ### 2. Replace the category loop with direct indexing

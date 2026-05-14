@@ -60,8 +60,9 @@ int main() {
   Eigen::MatrixXd prior = pi.transpose().replicate(data.n_obs(), 1);
   std::cout << "prior (uniform):\n" << prior << std::endl;
 
-  Eigen::MatrixXd posterior = pypolca::e_step(data, p, prior, n_classes);
+  auto [posterior, loglik] = pypolca::e_step(data, p, prior, n_classes);
   std::cout << "posterior:\n" << posterior << std::endl;
+  std::cout << "loglik: " << loglik << std::endl;
   // With uniform prior, posterior(i,r) = ylik(i,r) / sum_r(ylik(i,r))
 
   // ============================================================

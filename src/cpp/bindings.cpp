@@ -79,7 +79,7 @@ PYBIND11_MODULE(_core, m) {
     m.def("e_step",
           &pypolca::e_step,
           py::arg("data"), py::arg("params"), py::arg("prior"), py::arg("nclass"),
-          "E-step: compute posterior class membership probabilities (N x nclass).");
+          "E-step: compute posterior class membership probabilities and log-likelihood. Returns (posterior, loglik).");
 
     m.def("m_step_probs",
           &pypolca::m_step_probs,

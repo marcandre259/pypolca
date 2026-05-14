@@ -15,12 +15,12 @@ namespace pypolca {
 Eigen::MatrixXd compute_log_ylik(const Data& data, const Params& p, int nclass);
 
 /**
- * E-step: compute posterior class membership probabilities.
+ * E-step: compute posterior class membership probabilities and log-likelihood.
  *
- * Returns: N x nclass matrix of posterior probabilities.
+ * Returns: {N x nclass matrix of posterior probabilities, total log-likelihood}.
  */
-Eigen::MatrixXd e_step(const Data& data, const Params& p,
-                       const Eigen::MatrixXd& prior, int nclass);
+std::pair<Eigen::MatrixXd, double> e_step(const Data& data, const Params& p,
+                                          const Eigen::MatrixXd& prior, int nclass);
 
 
 double compute_logsumexp(const Eigen::VectorXd& x);

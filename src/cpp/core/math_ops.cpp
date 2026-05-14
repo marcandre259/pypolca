@@ -5,8 +5,7 @@
 
 namespace pypolca {
 
-// P(y_i | class = r) for all i, r.
-// Need to figure out how to deal with underflow: sum-log-exp trick?
+// log P(y_i | class = r) for all i, r.
 Eigen::MatrixXd compute_log_ylik(const Data &data, const Params &p,
                                  int nclass) {
   const int N = data.n_obs();
@@ -14,7 +13,7 @@ Eigen::MatrixXd compute_log_ylik(const Data &data, const Params &p,
 
   const int M = data.n_items();
 
-  const Eigen::VectorXd& vecprobs = p.vecprobs;
+  const Eigen::VectorXd &vecprobs = p.vecprobs;
 
   int sum_choices = 0;
   for (int j = 0; j < M; j++) {
@@ -22,36 +21,36 @@ Eigen::MatrixXd compute_log_ylik(const Data &data, const Params &p,
   }
 
   Eigen::MatrixXd log_ylik(N, R);
-  log_ylik.setZero();
 
   for (int i = 0; i < N; i++) {
     for (int r = 0; r < R; r++) {
       // Defined across M and choices
       int current_choice_pos = 0;
+      double ll = 0.0;
       for (int j = 0; j < M; j++) {
         int obs_value = data.y(i, j);
         int cat_choices = data.num_choices[j];
-        for (int k = 0; k < cat_choices; k++) {
-          int idx = r * sum_choices + current_choice_pos;
-          double prob_rjk = vecprobs(idx);
-          if (obs_value == k + 1) {
-            if (prob_rjk <= 0) {
-              log_ylik(i, r) = -std::numeric_limits<double>::infinity();
-            } else {
-              // Don't forget multiplication for each j of M
-              log_ylik(i, r) += std::log(prob_rjk);
-            }
-          }
-          current_choice_pos++;
+        if (obs_value < 1) {
+          current_choice_pos += cat_choices;
+          continue;
         }
+        int idx = r * sum_choices + current_choice_pos + (obs_value - 1);
+        double prob_rjk = vecprobs(idx);
+        if (prob_rjk <= 0) {
+          ll = -std::numeric_limits<double>::infinity();
+        } else {
+          ll += std::log(prob_rjk);
+        }
+        current_choice_pos += cat_choices;
       }
+      log_ylik(i, r) = ll;
     }
   }
 
   return log_ylik;
 }
 
-double compute_logsumexp(const Eigen::VectorXd& x) {
+double compute_logsumexp(const Eigen::VectorXd &x) {
   double max_x = x.maxCoeff();
   int N = x.size();
   double sum = 0.0;
@@ -64,8 +63,9 @@ double compute_logsumexp(const Eigen::VectorXd& x) {
 }
 
 // Posterior class membership probabilities.
-Eigen::MatrixXd e_step(const Data &data, const Params &p,
-                       const Eigen::MatrixXd &prior, int nclass) {
+std::pair<Eigen::MatrixXd, double> e_step(const Data &data, const Params &p,
+                                          const Eigen::MatrixXd &prior,
+                                          int nclass) {
   const int N = data.n_obs();
   const int R = nclass;
 
@@ -74,6 +74,8 @@ Eigen::MatrixXd e_step(const Data &data, const Params &p,
   Eigen::MatrixXd posterior(N, nclass);
   Eigen::VectorXd log_nums(nclass);
 
+  double total_loglik = 0.0;
+
   for (int i = 0; i < N; i++) {
     for (int r = 0; r < R; r++) {
       double log_prior = std::log(prior(i, r));
@@ -81,12 +83,14 @@ Eigen::MatrixXd e_step(const Data &data, const Params &p,
       log_nums(r) = log_num;
     }
     double log_denom = compute_logsumexp(log_nums);
+    total_loglik += log_denom;
+
     for (int r = 0; r < R; r++) {
       posterior(i, r) = std::exp(log_nums(r) - log_denom);
     }
   }
 
-  return posterior;
+  return {posterior, total_loglik};
 }
 
 // Update class-conditional response probabilities.
@@ -95,7 +99,7 @@ Eigen::VectorXd m_step_probs(const Data &data, const Eigen::MatrixXd &posterior,
   int N = data.n_obs();
   int M = data.n_items();
 
-  const Eigen::MatrixXi& y = data.y;
+  const Eigen::MatrixXi &y = data.y;
 
   int total_choices = 0;
   for (int k : num_choices) {
@@ -138,9 +142,8 @@ Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd &x,
   const int M = x.cols();
 
   if (beta.size() != (nclass - 1) * M) {
-      throw std::invalid_argument(
-          "beta size must equal (nclass - 1) * n_covariates"
-      );
+    throw std::invalid_argument(
+        "beta size must equal (nclass - 1) * n_covariates");
   }
 
   Eigen::Map<const Eigen::MatrixXd> beta_mat(beta.data(), M, nclass - 1);
@@ -181,7 +184,7 @@ compute_beta_derivatives(const Data &data, const Eigen::MatrixXd &posterior,
   int M = data.n_covariates();
   int rank = M * (nclass - 1);
 
-  const Eigen::MatrixXd& x = data.x;
+  const Eigen::MatrixXd &x = data.x;
 
   Eigen::VectorXd gradients(rank);
   gradients.setZero();
@@ -189,7 +192,7 @@ compute_beta_derivatives(const Data &data, const Eigen::MatrixXd &posterior,
   hessians.setZero();
 
   if (nclass == 1) {
-      return {gradients, hessians};
+    return {gradients, hessians};
   }
 
   for (int i = 0; i < N; i++) {
@@ -224,15 +227,13 @@ std::pair<Eigen::VectorXd, Eigen::MatrixXd>
 update_beta(const Data &data, const Eigen::MatrixXd &posterior,
             const Eigen::MatrixXd &prior, const Eigen::VectorXd &beta,
             int nclass) {
-  const Eigen::MatrixXd& x = data.x;
-
+  const Eigen::MatrixXd &x = data.x;
 
   int M = data.n_covariates();
 
   if (beta.size() != (nclass - 1) * M) {
-      throw std::invalid_argument(
-          "beta size must equal (nclass - 1) * n_covariates"
-      );
+    throw std::invalid_argument(
+        "beta size must equal (nclass - 1) * n_covariates");
   }
 
   auto [gradients, hessians] =
