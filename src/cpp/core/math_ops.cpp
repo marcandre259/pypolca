@@ -106,28 +106,29 @@ Eigen::VectorXd m_step_probs(const Data &data, const Eigen::MatrixXd &posterior,
     total_choices += k;
   }
 
-  Eigen::VectorXd vecprobs;
-  vecprobs = Eigen::VectorXd::Zero(nclass * total_choices);
+  Eigen::VectorXd vecprobs(nclass * total_choices);
+  vecprobs.setZero();
 
+  // I don't think I even need to loop through choice, I can just assign and so
+  // on
   for (int r = 0; r < nclass; r++) {
     int pos = 0;
     for (int j = 0; j < M; j++) {
-      int current_choices = num_choices[j];
-      double sum_posteriors = 0.0;
+      int K = num_choices[j];
+      std::vector<double> acc(K, 0.0);
+      double sum = 0.0;
       for (int i = 0; i < N; i++) {
-        if (y(i, j) > 0) {
-          sum_posteriors += posterior(i, r);
+        int value = y(i, j);
+        if (value > 0) {
+          double post = posterior(i, r);
+          acc[value - 1] += post;
+          sum += post;
         }
       }
-      for (int k = 0; k < current_choices; k++) {
-        for (int i = 0; i < N; i++) {
-          if (y(i, j) == k + 1) {
-            vecprobs(r * total_choices + pos + k) += posterior(i, r);
-          }
-        }
-        vecprobs(r * total_choices + pos + k) /= sum_posteriors;
+      for (int k = 0; k < K; k++) {
+        vecprobs(r * total_choices + pos + k) = acc[k] / sum;
       }
-      pos += current_choices;
+      pos += K;
     }
   }
 
