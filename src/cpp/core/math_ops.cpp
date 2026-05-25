@@ -1,9 +1,28 @@
 #include "pypolca/math_ops.h"
+#include "Eigen/src/Core/Matrix.h"
 #include <Eigen/Dense>
-#include <limits>
 #include <stdexcept>
 
 namespace pypolca {
+
+static int total_choices(const std::vector<double> &num_choices) {
+  int total_choices = 0;
+  for (int k : num_choices) {
+    total_choices += k;
+  }
+
+  return total_choices;
+}
+
+static int prob_index(int k, int j, int r,
+                      const std::vector<double> &num_choices,
+                      int total_choices) {
+  int pos = 0;
+  for (int jj = 0; jj < j; jj++) {
+    pos += num_choices[jj];
+  }
+  return r * total_choices + pos + k;
+}
 
 // log P(y_i | class = r) for all i, r.
 Eigen::MatrixXd compute_log_ylik(const Data &data, const Params &p,
@@ -248,6 +267,108 @@ update_beta(const Data &data, const Eigen::MatrixXd &posterior,
       compute_prior_from_beta(x, updated_beta, nclass);
 
   return {updated_beta, updated_prior};
+}
+
+SEs compute_standard_errors(const Data &data, const Params &params,
+                            const Eigen::MatrixXd &posterior,
+                            const Eigen::MatrixXd &prior, int nclass) {
+  const int N = data.n_obs();
+  const int J = data.n_items();
+  const int R = nclass;
+  const int S = data.n_covariates();
+  const int total_choices = total_choices(data.num_choices);
+
+  std::vector<int> num_choices = data.num_choices;
+
+  // Free parameters
+  int Dp = 0;
+  for (int j = 0; j < J; j++) {
+    Dp += R * (num_choices[j] - 1)
+  }
+
+  int Dbeta = S * (R - 1);
+
+  int D = Dp + Dbeta;
+
+  Eigen::MatrixXd scores(N, D);
+  scores.setZero();
+  int col = 0;
+  const std::vector<double> &vecprobs = params.vecprobs;
+
+  // Score matrix of response-probabilities
+  for (int r = 0; r < R; r++) {
+    for (int j = 0; j < J; j++) {
+      int K_j = num_choices[j];
+      for (int k = 0; k < K_j; k++) {
+        size_t idx = prob_index(k, j, r, num_choices, total_choices);
+        prob = vecprobs[idx];
+        for (int i = 0; i < N; i++) {
+          if (data.y(i, j) <= 0) {
+            continue;
+          }
+          double ind = data.y(i, j) == k + 1 ? 1.0 : 0.0;
+          scores(i, col) += posterior(i, r) * (ind - prob);
+        }
+        col++;
+      }
+    }
+  }
+
+  // Score matrix of logistic beta's
+  for (int r = 1; r < R; r++) {
+    for (int l = 0; l < S; l++) {
+      for (int i = 0; i < N; i++) {
+        scores(i, col) += data.x(i, l) * (posterior(i, r) - prior(i, r));
+      }
+      col++;
+    }
+  }
+
+  Eigen::MatrixXd info = scores.transpose() * scores;
+  Eigen::MatrixXd VCE = info.completeOrthogonalDecomposition().pseudoInverse();
+
+  // Delta-method
+  int total_probs = R * total_choices;
+  Eigen::MatrixXd J_probs(total_probs, Dp);
+
+  int rpos = 0;
+  int cpos = 0;
+
+  // Softmax Jacobian: diag(p) - p p^T, drop first column (reference)
+  for (int r = 0; r < R; r++) {
+    for (int j = 0; j < J; j++) {
+      int K_j = num_choices[j];
+      Eigen::VectorXd p(K_j);
+      for (int k = 0; k < K_j; k++) {
+        size_t idx = prob_index(k, j, r, num_choices, total_choices);
+        p(k) = vecprobs[idx];
+      }
+      Eigen::MatrixXd J_sub = p.asDiagonal() - (p * p.transpose());
+      J_probs.block(rpos, cpos, K, K - 1) = J_sub.rightCols(K - 1);
+      rpos += K;
+      cpos += K - 1;
+    }
+  }
+
+  Eigen::MatrixXd VCE_lo = VCE.topLeftCorner(Dp, Dp);
+  Eigen::MatrixXd VCE_probs = J_probs * VCE_lo * J_probs.tranpose();
+  Eigen::VectorXd vecprobs_se = VCE_probs.diagonal().cwiseMax(0.0).cwiseSqrt();
+
+  // Beta jacobian, think prior and design matrix
+  // Recall dim is (R - 1) * S in cols in R in rows
+  Eigen::VectorXd beta_se;
+  Eigen::MatrixXd beta_V;
+  Eigen::VectorXd P_se;
+
+  if (R > 1) {
+    beta_V = VCE.bottomRightCorner(Db, Db);
+    beta_se = beta_V.diagonal().cwiseMax(0.0).cwiseSqrt();
+
+    Eigen::MatrixXd beta_probs(R, Db);
+
+    for (int i = 0; i < N; i++) {
+    }
+  }
 }
 
 } // namespace pypolca

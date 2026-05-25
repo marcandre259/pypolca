@@ -44,7 +44,8 @@ static Eigen::VectorXd random_init_probs(const std::vector<int> &num_choices,
 
 Results fit_em(const Data &data, int nclass, int maxiter, double tol,
                const Eigen::VectorXd &probs_start,
-               const Eigen::VectorXd &beta_start, unsigned int seed) {
+               const Eigen::VectorXd &beta_start, unsigned int seed,
+               bool calc_se = true) {
   const int N = data.n_obs();
   const int S = data.n_covariates();
 
@@ -78,16 +79,19 @@ Results fit_em(const Data &data, int nclass, int maxiter, double tol,
   double log_lik_latest = std::numeric_limits<double>::infinity();
   int n_iter = 0;
   bool converged = true;
+  bool error = false;
 
   Eigen::MatrixXd posterior(N, nclass);
+
+  {
+    std::pair<Eigen::MatrixXd, double> result = e_step(data, p, prior, nclass);
+    posterior = result.first;
+    log_lik_latest = result.second;
+  }
 
   while (std::abs(dll) >= tol) {
     n_iter += 1;
     double log_lik_prev = log_lik_latest;
-
-    std::pair<Eigen::MatrixXd, double> result = e_step(data, p, prior, nclass);
-    posterior = result.first;
-    log_lik_latest = result.second;
 
     p.vecprobs = m_step_probs(data, posterior, data.num_choices, nclass);
 
@@ -103,10 +107,15 @@ Results fit_em(const Data &data, int nclass, int maxiter, double tol,
       prior = col_means.transpose().replicate(N, 1);
     }
 
+    std::pair<Eigen::MatrixXd, double> result = e_step(data, p, prior, nclass);
+    posterior = result.first;
+    log_lik_latest = result.second;
+
     dll = log_lik_latest - log_lik_prev;
 
     if (S > 1 && dll < -1e-7) {
       converged = false;
+      error = true;
       break;
     } else if (n_iter >= maxiter) {
       converged = false;
@@ -114,14 +123,21 @@ Results fit_em(const Data &data, int nclass, int maxiter, double tol,
     }
   }
 
-  std::pair<Eigen::MatrixXd, double> result = e_step(data, p, prior, nclass);
-
   res.converged = converged;
-  res.loglik = result.second;
+  res.loglik = log_lik_latest;
   res.iterations = n_iter;
-  res.posterior = result.first;
+  res.posterior = posterior;
   res.prior = prior;
   res.params = p;
+
+  if (calc_se && !error) {
+    auto ses = compute_standard_errors(data, p, posterior, prior, nclass);
+    res.vecprobs_se = ses.vecprobs_se;
+    res.P_se = ses.P_se;
+    res.beta_se = ses.beta_se;
+    res.beta_V = ses.beta_V;
+  }
+
   return res;
 }
 

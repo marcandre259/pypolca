@@ -132,7 +132,7 @@ class TestEStep:
         d = make_data([[1, 1], [2, 2]], [[1.0], [1.0]], [2, 2])
         p = make_params([0.5] * 8)
         prior = np.full((2, 2), 0.5)
-        post = e_step(d, p, prior, 2)
+        post, loglik = e_step(d, p, prior, 2)
         np.testing.assert_allclose(post.sum(axis=1), np.ones(2), atol=1e-12)
 
     def test_equal_priors_equal_likelihoods(self):
@@ -141,7 +141,7 @@ class TestEStep:
         d = make_data([[1, 1]], [[1.0]], [2, 2])
         p = make_params([0.5] * 8)
         prior = np.full((1, 2), 0.5)
-        post = e_step(d, p, prior, 2)
+        post, loglik = e_step(d, p, prior, 2)
         np.testing.assert_allclose(post, np.full((1, 2), 0.5))
 
     def test_extreme_prior_dominates(self):
@@ -150,7 +150,7 @@ class TestEStep:
         d = make_data([[1, 1]], [[1.0]], [2, 2])
         p = make_params([0.5] * 8)
         prior = np.array([[0.99, 0.01]])
-        post = e_step(d, p, prior, 2)
+        post, loglik = e_step(d, p, prior, 2)
         np.testing.assert_allclose(post[0], prior[0], atol=0.01)
 
 

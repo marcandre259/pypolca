@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Eigen/src/Core/Matrix.h"
 #include "pypolca/types.h"
 #include <Eigen/Dense>
 #include <utility>
@@ -12,28 +13,27 @@ namespace pypolca {
  * Returns: N x nclass matrix.  Each entry is the product over items j of
  * the probability of observing y[i,j] given class r.
  */
-Eigen::MatrixXd compute_log_ylik(const Data& data, const Params& p, int nclass);
+Eigen::MatrixXd compute_log_ylik(const Data &data, const Params &p, int nclass);
 
 /**
  * E-step: compute posterior class membership probabilities and log-likelihood.
  *
- * Returns: {N x nclass matrix of posterior probabilities, total log-likelihood}.
+ * Returns: {N x nclass matrix of posterior probabilities, total
+ * log-likelihood}.
  */
-std::pair<Eigen::MatrixXd, double> e_step(const Data& data, const Params& p,
-                                          const Eigen::MatrixXd& prior, int nclass);
+std::pair<Eigen::MatrixXd, double> e_step(const Data &data, const Params &p,
+                                          const Eigen::MatrixXd &prior,
+                                          int nclass);
 
-
-double compute_logsumexp(const Eigen::VectorXd& x);
+double compute_logsumexp(const Eigen::VectorXd &x);
 
 /**
  * M-step for response probabilities (no covariates).
  *
  * Returns: updated vecprobs vector.
  */
-Eigen::VectorXd m_step_probs(const Data& data,
-                             const Eigen::MatrixXd& posterior,
-                             const std::vector<int>& num_choices,
-                             int nclass);
+Eigen::VectorXd m_step_probs(const Data &data, const Eigen::MatrixXd &posterior,
+                             const std::vector<int> &num_choices, int nclass);
 
 /**
  * Compute gradient and observed information for the beta parameters.
@@ -41,11 +41,9 @@ Eigen::VectorXd m_step_probs(const Data& data,
  * Returns: {gradient vector, negative Hessian (observed information matrix)}.
  */
 std::pair<Eigen::VectorXd, Eigen::MatrixXd>
-compute_beta_derivatives(const Data& data,
-                         const Eigen::MatrixXd& posterior,
-                         const Eigen::MatrixXd& prior,
-                         const Eigen::VectorXd& beta,
-                         int nclass);
+compute_beta_derivatives(const Data &data, const Eigen::MatrixXd &posterior,
+                         const Eigen::MatrixXd &prior,
+                         const Eigen::VectorXd &beta, int nclass);
 
 /**
  * Update beta via one Newton-Raphson step and recompute priors.
@@ -53,10 +51,8 @@ compute_beta_derivatives(const Data& data,
  * Returns: {new_beta, new_prior_matrix}.
  */
 std::pair<Eigen::VectorXd, Eigen::MatrixXd>
-update_beta(const Data& data,
-            const Eigen::MatrixXd& posterior,
-            const Eigen::MatrixXd& prior,
-            const Eigen::VectorXd& beta,
+update_beta(const Data &data, const Eigen::MatrixXd &posterior,
+            const Eigen::MatrixXd &prior, const Eigen::VectorXd &beta,
             int nclass);
 
 /**
@@ -65,8 +61,19 @@ update_beta(const Data& data,
  * beta: flat vector of length S*(R-1).
  * Returns: N x R matrix where each row sums to 1.
  */
-Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd& x,
-                                        const Eigen::VectorXd& beta,
+Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd &x,
+                                        const Eigen::VectorXd &beta,
                                         int nclass);
+
+struct SEs {
+  Eigen::VectorXd vecprobs_se;
+  Eigen::VectorXd P_se;
+  Eigen::VectorXd beta_se;
+  Eigen::MatrixXd beta_V;
+};
+
+SEs compute_standard_errors(const Data &data, const Params &params,
+                            const Eigen::MatrixXd &posterior,
+                            const Eigen::MatrixXd &prior, int nclass);
 
 } // namespace pypolca
