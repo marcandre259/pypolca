@@ -20,14 +20,16 @@ class LCAResult:
     # Prob params and beta params
     @property
     def npar(self) -> int:
-        n_classes = self.posterior[1]
+        n_classes = self.posterior.shape[1]
 
         if self._num_choices is None:
             return 0
 
         n_probs = sum(n_classes * (k - 1) for k in self._num_choices)
 
-        S = len(self.params[1]) // n_classes if n_classes > 1 else 0
+        beta = np.array(self.params.beta)
+        n_beta = len(beta)
+        S = n_beta // (n_classes - 1) if n_classes > 1 and n_beta > 0 else 0
 
         if S <= 1:
             return n_probs
@@ -37,40 +39,41 @@ class LCAResult:
         return n_probs + n_betas
 
     @property
-    def probs_se(self) -> list[np.ndarray]:
+    def probs_se(self) -> list:
         if not isinstance(self._num_choices, list):
             return []
 
         se_list = []
 
-        n_classes = self.posterior[1]
+        n_classes = self.posterior.shape[1]
 
         pos = 0
         for k in self._num_choices:
             block_len = n_classes * k
             block = self._raw.vecprobs_se[pos : pos + block_len]
             se_list.append(np.array(block).reshape((n_classes, k)))
-            pos += k
+            pos += block_len
 
         return se_list
 
     @property
     def P_se(self) -> np.ndarray:
-        return np.ndarray(self._raw.P_se)
+        return np.array(self._raw.P_se)
 
     @property
     def beta_se(self) -> np.ndarray:
         if len(self._raw.beta_se) == 0:
-            return np.ndarray([])
+            return np.array([])
 
-        n_classes = self.posterior[1]
-        S = len(self.params.beta) // (n_classes - 1)
+        n_classes = self.posterior.shape[1]
+        beta = np.array(self.params.beta)
+        S = len(beta) // (n_classes - 1) if n_classes > 1 else 0
 
-        return np.ndarray(self._raw.beta_se).reshape((S, n_classes - 1))
+        return np.array(self._raw.beta_se).reshape((S, n_classes - 1))
 
     @property
     def coeff_V(self) -> np.ndarray:
-        return np.ndarray(self._raw.beta_V)
+        return np.array(self._raw.beta_V)
 
     @property
     def loglik(self) -> float:

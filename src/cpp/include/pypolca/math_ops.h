@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Eigen/src/Core/Matrix.h"
+#include "Eigen/Dense"
 #include "pypolca/types.h"
 #include <Eigen/Dense>
 #include <utility>

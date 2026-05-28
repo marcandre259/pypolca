@@ -1,27 +1,25 @@
 #include "pypolca/math_ops.h"
-#include "Eigen/src/Core/Matrix.h"
 #include <Eigen/Dense>
 #include <stdexcept>
 
 namespace pypolca {
 
-static int total_choices(const std::vector<double> &num_choices) {
-  int total_choices = 0;
+static int total_choices(const std::vector<int> &num_choices) {
+  int n_choices = 0;
   for (int k : num_choices) {
-    total_choices += k;
+    n_choices += k;
   }
 
-  return total_choices;
+  return n_choices;
 }
 
-static int prob_index(int k, int j, int r,
-                      const std::vector<double> &num_choices,
-                      int total_choices) {
+static int prob_index(int k, int j, int r, const std::vector<int> &num_choices,
+                      int n_choices) {
   int pos = 0;
   for (int jj = 0; jj < j; jj++) {
     pos += num_choices[jj];
   }
-  return r * total_choices + pos + k;
+  return r * n_choices + pos + k;
 }
 
 // log P(y_i | class = r) for all i, r.
@@ -120,12 +118,12 @@ Eigen::VectorXd m_step_probs(const Data &data, const Eigen::MatrixXd &posterior,
 
   const Eigen::MatrixXi &y = data.y;
 
-  int total_choices = 0;
+  int n_choices = 0;
   for (int k : num_choices) {
-    total_choices += k;
+    n_choices += k;
   }
 
-  Eigen::VectorXd vecprobs(nclass * total_choices);
+  Eigen::VectorXd vecprobs(nclass * n_choices);
   vecprobs.setZero();
 
   // I don't think I even need to loop through choice, I can just assign and so
@@ -145,7 +143,7 @@ Eigen::VectorXd m_step_probs(const Data &data, const Eigen::MatrixXd &posterior,
         }
       }
       for (int k = 0; k < K; k++) {
-        vecprobs(r * total_choices + pos + k) = acc[k] / sum;
+        vecprobs(r * n_choices + pos + k) = acc[k] / sum;
       }
       pos += K;
     }
@@ -276,14 +274,14 @@ SEs compute_standard_errors(const Data &data, const Params &params,
   const int J = data.n_items();
   const int R = nclass;
   const int S = data.n_covariates();
-  const int total_choices = total_choices(data.num_choices);
+  const int n_choices = total_choices(data.num_choices);
 
   std::vector<int> num_choices = data.num_choices;
 
   // Free parameters
   int Dp = 0;
   for (int j = 0; j < J; j++) {
-    Dp += R * (num_choices[j] - 1)
+    Dp += R * (num_choices[j] - 1);
   }
 
   int Dbeta = S * (R - 1);
@@ -293,15 +291,15 @@ SEs compute_standard_errors(const Data &data, const Params &params,
   Eigen::MatrixXd scores(N, D);
   scores.setZero();
   int col = 0;
-  const std::vector<double> &vecprobs = params.vecprobs;
+  const Eigen::VectorXd &vecprobs = params.vecprobs;
 
   // Score matrix of response-probabilities
   for (int r = 0; r < R; r++) {
     for (int j = 0; j < J; j++) {
       int K_j = num_choices[j];
-      for (int k = 0; k < K_j; k++) {
-        size_t idx = prob_index(k, j, r, num_choices, total_choices);
-        prob = vecprobs[idx];
+      for (int k = 1; k < K_j; k++) {
+        size_t idx = prob_index(k, j, r, num_choices, n_choices);
+        double prob = vecprobs[idx];
         for (int i = 0; i < N; i++) {
           if (data.y(i, j) <= 0) {
             continue;
@@ -328,7 +326,7 @@ SEs compute_standard_errors(const Data &data, const Params &params,
   Eigen::MatrixXd VCE = info.completeOrthogonalDecomposition().pseudoInverse();
 
   // Delta-method
-  int total_probs = R * total_choices;
+  int total_probs = R * n_choices;
   Eigen::MatrixXd J_probs(total_probs, Dp);
 
   int rpos = 0;
@@ -340,18 +338,19 @@ SEs compute_standard_errors(const Data &data, const Params &params,
       int K_j = num_choices[j];
       Eigen::VectorXd p(K_j);
       for (int k = 0; k < K_j; k++) {
-        size_t idx = prob_index(k, j, r, num_choices, total_choices);
+        size_t idx = prob_index(k, j, r, num_choices, n_choices);
         p(k) = vecprobs[idx];
       }
-      Eigen::MatrixXd J_sub = p.asDiagonal() - (p * p.transpose());
-      J_probs.block(rpos, cpos, K, K - 1) = J_sub.rightCols(K - 1);
-      rpos += K;
-      cpos += K - 1;
+      Eigen::MatrixXd J_sub =
+          Eigen::MatrixXd(p.asDiagonal()) - (p * p.transpose());
+      J_probs.block(rpos, cpos, K_j, K_j - 1) = J_sub.rightCols(K_j - 1);
+      rpos += K_j;
+      cpos += K_j - 1;
     }
   }
 
   Eigen::MatrixXd VCE_lo = VCE.topLeftCorner(Dp, Dp);
-  Eigen::MatrixXd VCE_probs = J_probs * VCE_lo * J_probs.tranpose();
+  Eigen::MatrixXd VCE_probs = J_probs * VCE_lo * J_probs.transpose();
   Eigen::VectorXd vecprobs_se = VCE_probs.diagonal().cwiseMax(0.0).cwiseSqrt();
 
   // Beta jacobian, think prior and design matrix
@@ -361,14 +360,29 @@ SEs compute_standard_errors(const Data &data, const Params &params,
   Eigen::VectorXd P_se;
 
   if (R > 1) {
-    beta_V = VCE.bottomRightCorner(Db, Db);
+    beta_V = VCE.bottomRightCorner(Dbeta, Dbeta);
     beta_se = beta_V.diagonal().cwiseMax(0.0).cwiseSqrt();
 
-    Eigen::MatrixXd beta_probs(R, Db);
+    Eigen::MatrixXd J_mix(R, Dbeta);
 
     for (int i = 0; i < N; i++) {
+      Eigen::VectorXd pi = prior.row(i).transpose();
+      Eigen::MatrixXd psi =
+          Eigen::MatrixXd(pi.asDiagonal()) - pi * pi.transpose();
+      for (int r = 1; r < R; r++) {
+        for (int l = 0; l < S; l++) {
+          int beta_col = S * (r - 1) + l;
+          J_mix.col(beta_col) += psi.col(r) * data.x(i, l);
+        }
+      }
     }
+
+    J_mix /= static_cast<double>(N);
+    Eigen::MatrixXd VCE_P = J_mix * beta_V * J_mix.transpose();
+    P_se = VCE_P.diagonal().cwiseMax(0.0).cwiseSqrt();
   }
+
+  return {vecprobs_se, P_se, beta_se, beta_V};
 }
 
 } // namespace pypolca

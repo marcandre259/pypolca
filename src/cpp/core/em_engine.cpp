@@ -45,7 +45,7 @@ static Eigen::VectorXd random_init_probs(const std::vector<int> &num_choices,
 Results fit_em(const Data &data, int nclass, int maxiter, double tol,
                const Eigen::VectorXd &probs_start,
                const Eigen::VectorXd &beta_start, unsigned int seed,
-               bool calc_se = true) {
+               bool calc_se) {
   const int N = data.n_obs();
   const int S = data.n_covariates();
 

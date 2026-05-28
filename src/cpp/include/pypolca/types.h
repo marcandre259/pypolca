@@ -48,7 +48,7 @@ struct Results {
   bool error = false;
 
   // --- Standard errors (populate later) ---
-  std::vector<Eigen::MatrixXd> vecprobs_se; // J matrices of size nclass x K_j
+  Eigen::VectorXd vecprobs_se; // flat, same layout as Params::vecprobs
   Eigen::VectorXd P_se;                     // SE of class population shares
   Eigen::VectorXd beta_se;                  // SE of beta coefficients
   Eigen::MatrixXd beta_V;                   // COV matrix of beta coefficients

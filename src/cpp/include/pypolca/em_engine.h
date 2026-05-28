@@ -21,6 +21,7 @@ Results fit_em(const Data& data,
                double tol = 1e-10,
                const Eigen::VectorXd& probs_start = Eigen::VectorXd(),
                const Eigen::VectorXd& beta_start = Eigen::VectorXd(),
-               const unsigned int seed = 42);
+               const unsigned int seed = 42,
+               bool calc_se = true);
 
 } // namespace pypolca
