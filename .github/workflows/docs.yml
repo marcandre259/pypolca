@@ -35,7 +35,7 @@ jobs:
       - name: Build docs
         run: |
           cd docs
-          make html
+          make html SPHINXBUILD=sphinx-build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
