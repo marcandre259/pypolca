@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 license = {text = "GPL-2.0-or-later"}
 authors = [
-    {name = "Your Name", email = "you@example.com"},
+    {name = "Marc-André Chénier", email = "marcandrechenier@gmail.com"},
 ]
 keywords = ["latent class analysis", "EM algorithm", "mixture model"]
 classifiers = [
