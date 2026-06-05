@@ -22,13 +22,19 @@ struct Data {
     std::vector<int> num_choices;
 
     /// Number of observations (rows of y).
-    int n_obs() const { return static_cast<int>(y.rows()); }
+    int n_obs() const {
+        return static_cast<int>(y.rows());
+    }
 
     /// Number of items (columns of y).
-    int n_items() const { return static_cast<int>(y.cols()); }
+    int n_items() const {
+        return static_cast<int>(y.cols());
+    }
 
     /// Number of covariates (columns of x).
-    int n_covariates() const { return static_cast<int>(x.cols()); }
+    int n_covariates() const {
+        return static_cast<int>(x.cols());
+    }
 };
 
 /**
