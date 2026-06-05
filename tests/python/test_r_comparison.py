@@ -20,8 +20,9 @@ from pypolca import fit
 
 def _r_available() -> bool:
     try:
-        subprocess.run(["Rscript", "-e", "library(poLCA)"],
-                       capture_output=True, check=True, timeout=30)
+        subprocess.run(
+            ["Rscript", "-e", "library(poLCA)"], capture_output=True, check=True, timeout=30
+        )
         return True
     except Exception:
         return False
@@ -43,14 +44,11 @@ def _build_r_script(
     if probs_start is not None:
         mats = []
         for mat in probs_start:
-            rows = ", ".join(
-                "c(" + ", ".join(str(v) for v in row) + ")"
-                for row in mat
-            )
+            rows = ", ".join("c(" + ", ".join(str(v) for v in row) + ")" for row in mat)
             mats.append(f"matrix(c({rows}), nrow={len(mat)}, byrow=TRUE)")
         probs_start_r = "list(" + ", ".join(mats) + ")"
 
-    script = f'''
+    script = f"""
 library(poLCA)
 library(jsonlite)
 
@@ -73,7 +71,7 @@ out <- list(
 )
 
 cat(toJSON(out, digits=12, matrix="rowmajor"))
-'''
+"""
     return script
 
 
@@ -114,9 +112,7 @@ def run_r_polca(
         os.unlink(r_file)
 
 
-def _flatten_probs_start(
-    probs_start_list: list[list[list[float]]]
-) -> np.ndarray:
+def _flatten_probs_start(probs_start_list: list[list[list[float]]]) -> np.ndarray:
     """Convert R-style list-of-matrices to pypolca flat vector.
 
     R format: list of J matrices, each nclass x K_j
@@ -130,7 +126,9 @@ def _flatten_probs_start(
     return np.array(flat, dtype=np.float64)
 
 
-def _align_classes(py_probs: np.ndarray, r_probs, nclass: int, num_choices: list[int]) -> np.ndarray:
+def _align_classes(
+    py_probs: np.ndarray, r_probs, nclass: int, num_choices: list[int]
+) -> np.ndarray:
     """Return a permutation array that reorders pypolca classes to match R classes.
 
     r_probs may be a list of matrices or a dict (from JSON) of matrices.
@@ -165,7 +163,7 @@ def _align_classes(py_probs: np.ndarray, r_probs, nclass: int, num_choices: list
     used = set()
     for r_r in range(nclass):
         best = None
-        best_d = float('inf')
+        best_d = float("inf")
         for r_py in range(nclass):
             if r_py not in used and dist[r_py, r_r] < best_d:
                 best_d = dist[r_py, r_r]
@@ -178,11 +176,13 @@ def _align_classes(py_probs: np.ndarray, r_probs, nclass: int, num_choices: list
 @pytest.mark.skipif(not R_AVAILABLE, reason="R and poLCA not available")
 def test_synthetic_2class():
     """Small synthetic dataset: 2 classes, 3 binary items, 10 observations."""
-    df = pl.DataFrame({
-        "Y1": [1, 1, 1, 2, 2, 2, 1, 2, 1, 2],
-        "Y2": [1, 1, 2, 1, 2, 2, 2, 1, 1, 2],
-        "Y3": [1, 2, 1, 1, 2, 2, 2, 2, 1, 1],
-    })
+    df = pl.DataFrame(
+        {
+            "Y1": [1, 1, 1, 2, 2, 2, 1, 2, 1, 2],
+            "Y2": [1, 1, 2, 1, 2, 2, 2, 1, 1, 2],
+            "Y3": [1, 2, 1, 1, 2, 2, 2, 2, 1, 1],
+        }
+    )
 
     # Deterministic starting values (R format: list of J matrices, each nclass x K_j)
     probs_start_r = [
@@ -192,13 +192,15 @@ def test_synthetic_2class():
     ]
 
     # Run R reference
-    r_res = run_r_polca(df, ["Y1", "Y2", "Y3"], nclass=2,
-                        probs_start=probs_start_r, maxiter=1000, tol=1e-10)
+    r_res = run_r_polca(
+        df, ["Y1", "Y2", "Y3"], nclass=2, probs_start=probs_start_r, maxiter=1000, tol=1e-10
+    )
 
     # Run pypolca
     probs_start_py = _flatten_probs_start(probs_start_r)
-    py_res = fit("cbind(Y1, Y2, Y3) ~ 1", df, nclass=2,
-                 maxiter=1000, tol=1e-10, probs_start=probs_start_py)
+    py_res = fit(
+        "cbind(Y1, Y2, Y3) ~ 1", df, nclass=2, maxiter=1000, tol=1e-10, probs_start=probs_start_py
+    )
 
     # --- Compare log-likelihood ---
     assert py_res.loglik == pytest.approx(r_res["loglik"], abs=1e-5)
@@ -225,11 +227,11 @@ def test_synthetic_2class():
 def test_cheating_dataset():
     """Real-world cheating dataset shipped with R poLCA."""
     # Export cheating data from R to a temp CSV
-    r_export = '''
+    r_export = """
 library(poLCA)
 data(cheating)
 write.csv(cheating, "/tmp/polca_cheating_test.csv", row.names=FALSE)
-'''
+"""
     subprocess.run(["Rscript", "-e", r_export], check=True, capture_output=True)
     df = pl.read_csv("/tmp/polca_cheating_test.csv")
 
@@ -245,12 +247,24 @@ write.csv(cheating, "/tmp/polca_cheating_test.csv", row.names=FALSE)
         [[0.9, 0.1], [0.4, 0.6]],  # item 3
     ]
 
-    r_res = run_r_polca(df, ["LIEEXAM", "LIEPAPER", "FRAUD", "COPYEXAM"],
-                        nclass=2, probs_start=probs_start_r, maxiter=1000, tol=1e-10)
+    r_res = run_r_polca(
+        df,
+        ["LIEEXAM", "LIEPAPER", "FRAUD", "COPYEXAM"],
+        nclass=2,
+        probs_start=probs_start_r,
+        maxiter=1000,
+        tol=1e-10,
+    )
 
     probs_start_py = _flatten_probs_start(probs_start_r)
-    py_res = fit("cbind(LIEEXAM, LIEPAPER, FRAUD, COPYEXAM) ~ 1", df,
-                 nclass=2, maxiter=1000, tol=1e-10, probs_start=probs_start_py)
+    py_res = fit(
+        "cbind(LIEEXAM, LIEPAPER, FRAUD, COPYEXAM) ~ 1",
+        df,
+        nclass=2,
+        maxiter=1000,
+        tol=1e-10,
+        probs_start=probs_start_py,
+    )
 
     assert py_res.loglik == pytest.approx(r_res["loglik"], abs=1e-4)
 

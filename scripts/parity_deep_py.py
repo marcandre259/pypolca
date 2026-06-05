@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Deep parity: compare VCE matrix, score matrix between pypolca and R."""
+
 import numpy as np
 import polars as pl
 
@@ -30,8 +31,9 @@ cpp_data.y = y_mat
 cpp_data.x = np.ones((y_mat.shape[0], 1), dtype=np.float64)
 cpp_data.num_choices = num_choices
 
-raw = fit_em(cpp_data, nclass=2, maxiter=1000, tol=1e-10,
-             probs_start=probs_start_py, seed=42, calc_se=True)
+raw = fit_em(
+    cpp_data, nclass=2, maxiter=1000, tol=1e-10, probs_start=probs_start_py, seed=42, calc_se=True
+)
 
 print("=== loglik ===")
 print(raw.loglik)
@@ -138,7 +140,7 @@ try:
                 idx = r * n_choices + sum(num_choices[:j]) + k
                 p[k] = vecprobs[idx]
             Jsub = np.diag(p) - np.outer(p, p)
-            J_probs[rpos:rpos+K_j, cpos:cpos+K_j-1] = Jsub[:, 1:]
+            J_probs[rpos : rpos + K_j, cpos : cpos + K_j - 1] = Jsub[:, 1:]
             rpos += K_j
             cpos += K_j - 1
 

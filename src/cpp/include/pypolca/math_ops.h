@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Eigen/Dense"
-#include "pypolca/types.h"
 #include <Eigen/Dense>
 #include <utility>
+
+#include "Eigen/Dense"
+#include "pypolca/types.h"
 
 namespace pypolca {
 
@@ -22,8 +23,7 @@ Eigen::MatrixXd compute_log_ylik(const Data &data, const Params &p, int nclass);
  * log-likelihood}.
  */
 std::pair<Eigen::MatrixXd, double> e_step(const Data &data, const Params &p,
-                                          const Eigen::MatrixXd &prior,
-                                          int nclass);
+                                          const Eigen::MatrixXd &prior, int nclass);
 
 double compute_logsumexp(const Eigen::VectorXd &x);
 
@@ -40,20 +40,19 @@ Eigen::VectorXd m_step_probs(const Data &data, const Eigen::MatrixXd &posterior,
  *
  * Returns: {gradient vector, negative Hessian (observed information matrix)}.
  */
-std::pair<Eigen::VectorXd, Eigen::MatrixXd>
-compute_beta_derivatives(const Data &data, const Eigen::MatrixXd &posterior,
-                         const Eigen::MatrixXd &prior,
-                         const Eigen::VectorXd &beta, int nclass);
+std::pair<Eigen::VectorXd, Eigen::MatrixXd> compute_beta_derivatives(
+    const Data &data, const Eigen::MatrixXd &posterior, const Eigen::MatrixXd &prior,
+    const Eigen::VectorXd &beta, int nclass);
 
 /**
  * Update beta via one Newton-Raphson step and recompute priors.
  *
  * Returns: {new_beta, new_prior_matrix}.
  */
-std::pair<Eigen::VectorXd, Eigen::MatrixXd>
-update_beta(const Data &data, const Eigen::MatrixXd &posterior,
-            const Eigen::MatrixXd &prior, const Eigen::VectorXd &beta,
-            int nclass);
+std::pair<Eigen::VectorXd, Eigen::MatrixXd> update_beta(const Data &data,
+                                                        const Eigen::MatrixXd &posterior,
+                                                        const Eigen::MatrixXd &prior,
+                                                        const Eigen::VectorXd &beta, int nclass);
 
 /**
  * Build prior matrix from beta via multinomial logit (softmax).
@@ -61,19 +60,18 @@ update_beta(const Data &data, const Eigen::MatrixXd &posterior,
  * beta: flat vector of length S*(R-1).
  * Returns: N x R matrix where each row sums to 1.
  */
-Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd &x,
-                                        const Eigen::VectorXd &beta,
+Eigen::MatrixXd compute_prior_from_beta(const Eigen::MatrixXd &x, const Eigen::VectorXd &beta,
                                         int nclass);
 
 struct SEs {
-  Eigen::VectorXd vecprobs_se;
-  Eigen::VectorXd P_se;
-  Eigen::VectorXd beta_se;
-  Eigen::MatrixXd beta_V;
+    Eigen::VectorXd vecprobs_se;
+    Eigen::VectorXd P_se;
+    Eigen::VectorXd beta_se;
+    Eigen::MatrixXd beta_V;
 };
 
 SEs compute_standard_errors(const Data &data, const Params &params,
-                            const Eigen::MatrixXd &posterior,
-                            const Eigen::MatrixXd &prior, int nclass);
+                            const Eigen::MatrixXd &posterior, const Eigen::MatrixXd &prior,
+                            int nclass);
 
-} // namespace pypolca
+}  // namespace pypolca

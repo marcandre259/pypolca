@@ -15,13 +15,9 @@ namespace pypolca {
  * @param beta_start   Optional starting values for beta (can be empty).
  * @return          Fitted Results struct.
  */
-Results fit_em(const Data& data,
-               int nclass,
-               int maxiter = 1000,
-               double tol = 1e-10,
+Results fit_em(const Data& data, int nclass, int maxiter = 1000, double tol = 1e-10,
                const Eigen::VectorXd& probs_start = Eigen::VectorXd(),
-               const Eigen::VectorXd& beta_start = Eigen::VectorXd(),
-               const unsigned int seed = 42,
+               const Eigen::VectorXd& beta_start = Eigen::VectorXd(), const unsigned int seed = 42,
                bool calc_se = true);
 
-} // namespace pypolca
+}  // namespace pypolca

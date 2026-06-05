@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Parity test: run pypolca on cheating data, compare standard errors with R poLCA."""
+
 import numpy as np
 import polars as pl
 
@@ -34,8 +35,9 @@ cpp_data.x = np.ones((y_mat.shape[0], 1), dtype=np.float64)  # intercept only
 cpp_data.num_choices = num_choices
 
 # Fit with seed=42 (as in R)
-raw = fit_em(cpp_data, nclass=2, maxiter=1000, tol=1e-10,
-             probs_start=probs_start_py, seed=42, calc_se=True)
+raw = fit_em(
+    cpp_data, nclass=2, maxiter=1000, tol=1e-10, probs_start=probs_start_py, seed=42, calc_se=True
+)
 
 result = LCAResult(raw, num_choices=num_choices)
 

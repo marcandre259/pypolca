@@ -13,13 +13,19 @@ namespace pypolca {
  * item j.
  */
 struct Data {
-  Eigen::MatrixXi y;
-  Eigen::MatrixXd x;
-  std::vector<int> num_choices;
+    Eigen::MatrixXi y;
+    Eigen::MatrixXd x;
+    std::vector<int> num_choices;
 
-  int n_obs() const { return static_cast<int>(y.rows()); }
-  int n_items() const { return static_cast<int>(y.cols()); }
-  int n_covariates() const { return static_cast<int>(x.cols()); }
+    int n_obs() const {
+        return static_cast<int>(y.rows());
+    }
+    int n_items() const {
+        return static_cast<int>(y.cols());
+    }
+    int n_covariates() const {
+        return static_cast<int>(x.cols());
+    }
 };
 
 /**
@@ -31,27 +37,27 @@ struct Data {
  * vector.
  */
 struct Params {
-  Eigen::VectorXd vecprobs;
-  Eigen::VectorXd beta;
+    Eigen::VectorXd vecprobs;
+    Eigen::VectorXd beta;
 };
 
 /**
  * Fitted model results.
  */
 struct Results {
-  Params params;
-  Eigen::MatrixXd posterior; // N x nclass (class membership probabilities)
-  Eigen::MatrixXd prior;     // N x nclass (prior class probs per observation)
-  double loglik = 0.0;
-  int iterations = 0;
-  bool converged = false;
-  bool error = false;
+    Params params;
+    Eigen::MatrixXd posterior;  // N x nclass (class membership probabilities)
+    Eigen::MatrixXd prior;      // N x nclass (prior class probs per observation)
+    double loglik = 0.0;
+    int iterations = 0;
+    bool converged = false;
+    bool error = false;
 
-  // --- Standard errors (populate later) ---
-  Eigen::VectorXd vecprobs_se; // flat, same layout as Params::vecprobs
-  Eigen::VectorXd P_se;                     // SE of class population shares
-  Eigen::VectorXd beta_se;                  // SE of beta coefficients
-  Eigen::MatrixXd beta_V;                   // COV matrix of beta coefficients
+    // --- Standard errors (populate later) ---
+    Eigen::VectorXd vecprobs_se;  // flat, same layout as Params::vecprobs
+    Eigen::VectorXd P_se;         // SE of class population shares
+    Eigen::VectorXd beta_se;      // SE of beta coefficients
+    Eigen::MatrixXd beta_V;       // COV matrix of beta coefficients
 };
 
-} // namespace pypolca
+}  // namespace pypolca

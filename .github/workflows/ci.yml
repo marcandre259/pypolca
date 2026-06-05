@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
       - run: uvx ruff check .
       - run: uvx ruff format --check .
 
@@ -28,6 +29,7 @@ jobs:
         with:
           python-version: "3.13"
       - run: sudo apt-get install -y ninja-build
+      - run: uv pip install scikit_build_core
       - run: uv pip install -e . --no-build-isolation
       - run: uvx mypy pypolca/
 

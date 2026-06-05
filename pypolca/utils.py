@@ -4,7 +4,9 @@ import numpy as np
 import polars as pl
 
 
-def build_design_matrix(formula: str, data: pl.DataFrame, na_rm: bool = True) -> tuple[np.ndarray, np.ndarray, list[int]]:
+def build_design_matrix(
+    formula: str, data: pl.DataFrame, na_rm: bool = True
+) -> tuple[np.ndarray, np.ndarray, list[int]]:
     """Parse a simple formula and build design matrices.
 
     Supports:

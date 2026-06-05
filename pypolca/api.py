@@ -157,7 +157,9 @@ class LCAResult:
     def predclass(self) -> np.ndarray:
         return cast(np.ndarray, self.posterior.argmax(axis=1) + 1)  # 1-based class labels
 
-    def predict_posterior(self, newdata: pl.DataFrame, newx: pl.DataFrame | None = None) -> np.ndarray:
+    def predict_posterior(
+        self, newdata: pl.DataFrame, newx: pl.DataFrame | None = None
+    ) -> np.ndarray:
         """Compute posterior class membership probabilities for new data."""
         if self.formula is None:
             raise ValueError(
@@ -199,15 +201,17 @@ class LCAResult:
             beta = np.array(self.params.beta, dtype=np.float64)
             prior = compute_prior_from_beta(x_with_intercept, beta, R)
         elif has_covariates and newx is None:
-            raise ValueError(
-                "Model was fitted with covariates; newx must be provided."
-            )
+            raise ValueError("Model was fitted with covariates; newx must be provided.")
         else:
             prior = np.tile(self.P.reshape(1, -1), (N_new, 1))
 
         data_new = Data()
         data_new.y = y
-        data_new.x = x_with_intercept.copy() if (has_covariates and newx is not None) else np.ones((N_new, 1), dtype=np.float64)
+        data_new.x = (
+            x_with_intercept.copy()
+            if (has_covariates and newx is not None)
+            else np.ones((N_new, 1), dtype=np.float64)
+        )
         data_new.num_choices = list(num_choices)
 
         posterior_mat, _ = e_step(data_new, self.params, prior, R)
@@ -396,9 +400,7 @@ def fit(
     # Ensure y is integer and 1-based
     y_int = y_mat.astype(np.int32)
     if y_int.min() < 0:
-        raise ValueError(
-            "Response variables must be non-negative integers (0 = missing)."
-        )
+        raise ValueError("Response variables must be non-negative integers (0 = missing).")
 
     cpp_data = Data()
     cpp_data.y = y_int
@@ -432,7 +434,10 @@ def fit(
 
             if not raw.error:
                 candidate = LCAResult(
-                    raw, formula=formula, data=data, num_choices=num_choices,
+                    raw,
+                    formula=formula,
+                    data=data,
+                    num_choices=num_choices,
                     y_mat=y_int,
                 )
                 if raw.loglik > best_loglik:
@@ -445,9 +450,7 @@ def fit(
                 break
             else:
                 if verbose:
-                    print(
-                        f"Rep {rep + 1}/{nrep}: attempt {attempt + 1} dropped, retrying ..."
-                    )
+                    print(f"Rep {rep + 1}/{nrep}: attempt {attempt + 1} dropped, retrying ...")
         else:
             # All restarts for this rep failed
             if verbose:

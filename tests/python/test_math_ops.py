@@ -52,8 +52,16 @@ class TestComputeYlik:
     def test_zero_prob_gives_neg_inf(self):
         """If observed category has probability 0, log-likelihood is -inf."""
         # Class 0: item 0 cat 1 = 1.0, item 0 cat 2 = 0.0, item 1 all 0.5
-        vec = [1.0, 0.0, 0.5, 0.5,   # class 0
-               0.5, 0.5, 0.5, 0.5]   # class 1
+        vec = [
+            1.0,
+            0.0,
+            0.5,
+            0.5,  # class 0
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+        ]  # class 1
         d = make_data([[2, 1]], [[1.0]], [2, 2])
         p = make_params(vec)
         lik = compute_ylik(d, p, 2)
@@ -63,8 +71,7 @@ class TestComputeYlik:
     def test_missing_data_skipped(self):
         """Missing values (0) do not contribute to likelihood."""
         d = make_data([[1, 0]], [[1.0]], [2, 2])
-        p = make_params([0.9, 0.1, 0.5, 0.5,
-                         0.5, 0.5, 0.5, 0.5])
+        p = make_params([0.9, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
         lik = compute_ylik(d, p, 2)
         # class 0: log(0.9) + log(1.0) (missing -> no contribution)
         np.testing.assert_allclose(lik[0, 0], np.log(0.9))
@@ -75,16 +82,17 @@ class TestComputeYlik:
         # 2 items, 3 categories each, 2 classes
         # Class 0: [0.7, 0.2, 0.1,  0.1, 0.8, 0.1]
         # Class 1: [0.1, 0.1, 0.8,  0.7, 0.2, 0.1]
-        vec = [0.7, 0.2, 0.1, 0.1, 0.8, 0.1,
-               0.1, 0.1, 0.8, 0.7, 0.2, 0.1]
+        vec = [0.7, 0.2, 0.1, 0.1, 0.8, 0.1, 0.1, 0.1, 0.8, 0.7, 0.2, 0.1]
         d = make_data([[1, 2], [3, 1]], [[1.0], [1.0]], [3, 3])
         p = make_params(vec)
         lik = compute_ylik(d, p, 2)
 
-        expected = np.array([
-            [np.log(0.7) + np.log(0.8), np.log(0.1) + np.log(0.2)],
-            [np.log(0.1) + np.log(0.1), np.log(0.8) + np.log(0.7)],
-        ])
+        expected = np.array(
+            [
+                [np.log(0.7) + np.log(0.8), np.log(0.1) + np.log(0.2)],
+                [np.log(0.1) + np.log(0.1), np.log(0.8) + np.log(0.7)],
+            ]
+        )
         np.testing.assert_allclose(lik, expected)
 
 
@@ -228,8 +236,7 @@ class TestBetaDerivativesAndUpdate:
     def test_invalid_beta_size(self):
         d = make_data([[1, 1]], [[1.0]], [2, 2])
         with pytest.raises(ValueError, match="beta size"):
-            update_beta(d, np.ones((1, 2)), np.full((1, 2), 0.5),
-                        np.zeros(2), 2)
+            update_beta(d, np.ones((1, 2)), np.full((1, 2), 0.5), np.zeros(2), 2)
 
 
 if __name__ == "__main__":
