@@ -1,5 +1,8 @@
 # pypoLCA
 
+[![CI](https://github.com/marcandre259/pypolca/actions/workflows/ci.yml/badge.svg)](https://github.com/marcandre259/pypolca/actions/workflows/ci.yml)
+[![Docs](https://github.com/marcandre259/pypolca/actions/workflows/docs.yml/badge.svg)](https://marcandre259.github.io/pypolca/)
+
 <p align="center">
   <img src="assets/pypolca-logo.png" alt="pypoLCA logo" width="400">
 </p>
