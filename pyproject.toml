@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pypolca"
-version = "0.1.0"
+version = "0.4.0"
 description = "Polytomous Variable Latent Class Analysis in C++ with Python bindings"
 readme = "README.md"
 requires-python = ">=3.13"

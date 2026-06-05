@@ -2,6 +2,7 @@
 
 from pypolca._core import Data, Results, fit_em, compute_ylik, compute_prior_from_beta
 from pypolca.api import fit
+from pypolca.data import Dataset, load_dataset, get_dataset_info
 
 __all__ = [
     "Data",
@@ -10,6 +11,9 @@ __all__ = [
     "compute_ylik",
     "compute_prior_from_beta",
     "fit",
+    "Dataset",
+    "load_dataset",
+    "get_dataset_info",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.4.0"
