@@ -42,10 +42,9 @@ minimum-version = "0.5"
 build-dir = "build/{wheel_tag}"
 cmake.verbose = true
 cmake.args = ["-GNinja", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
+wheel.packages = ["pypolca"]
 
 [tool.cibuildwheel]
-manylinux-x86_64-image = "manylinux_2_28"
-manylinux-aarch64-image = "manylinux_2_28"
 test-extras = "dev"
 test-command = "pytest {project}/tests -x -q"
 
