@@ -90,7 +90,7 @@ jobs:
           CIBW_BUILD: "cp313-*"
           CIBW_SKIP: "*_i686 *-musllinux*"
           CIBW_ARCHS_MACOS: "arm64 x86_64"
-          CIBW_TEST_REQUIRES: "pytest scipy"
+          CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/tests"
 
       - uses: actions/upload-artifact@v4
