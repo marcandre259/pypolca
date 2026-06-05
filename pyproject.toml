@@ -3,7 +3,7 @@ requires = ["scikit-build-core>=0.5", "pybind11"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "pypolca"
+name = "polca"
 version = "0.4.0"
 description = "Polytomous Variable Latent Class Analysis in C++ with Python bindings"
 readme = "README.md"
