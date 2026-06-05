@@ -92,7 +92,7 @@ The formula syntax uses `cbind(var1, var2, ...)` on the left-hand side, or equiv
 
 ## Backend
 
-The EM engine and standard error computation are written in **C++17** (Eigen for linear algebra), exposed to Python via **pybind11**. The build system is CMake + scikit-build-core, managed by `uv`. Incremental C++ rebuilds take ~1–2 s with `./rebuild.sh`.
+The EM engine and standard error computation are written in C++17 (Eigen for linear algebra), exposed to Python via pybind11. The build system is CMake + scikit-build-core, managed by `uv`. Incremental C++ rebuilds take ~1–2 s with `./rebuild.sh`.
 
 ## Benchmarks
 
