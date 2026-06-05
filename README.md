@@ -125,6 +125,8 @@ pypoLCA is a translation of Drew A. Linzer and Jeffrey B. Lewis's R package:
 
 Built-in datasets and the EM / Newton-Raphson algorithm are taken from the `poLCA` R package, licensed GPL-2.0-or-later.
 
+C++ bindings powered by [pybind11](https://github.com/pybind/pybind11). Linear algebra via [Eigen](https://eigen.tuxfamily.org/).
+
 ## Contributing
 
 Contributions are welcome and appreciated. Please keep submissions tight and purposeful. The goal is to keep `pypoLCA` a focused, maintainable package. AI-assisted contributions are fine, but AI use doesn't excuse sloppy or verbose work; review your output before submitting a PR.
