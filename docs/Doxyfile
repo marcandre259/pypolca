@@ -1,0 +1,24 @@
+# Doxygen config for pypolca C++ headers → Breathe/Sphinx
+# Only generates XML (no HTML/LaTeX), consumed by Breathe
+
+PROJECT_NAME           = "pypolca C++ Core"
+PROJECT_BRIEF          = "C++ backend for polytomous latent class analysis"
+OUTPUT_DIRECTORY       = _doxygen
+INPUT                  = ../src/cpp/include/pypolca
+RECURSIVE              = YES
+FILE_PATTERNS          = *.h
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+XML_PROGRAMLISTING     = NO
+GENERATE_TODOLIST      = NO
+GENERATE_BUGLIST       = NO
+GENERATE_TESTLIST      = NO
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+SORT_MEMBER_DOCS       = NO
+SHOW_INCLUDE_FILES     = NO
+WARN_NO_PARAMDOC       = NO
+WARN_IF_UNDOCUMENTED   = NO
+QUIET                  = YES

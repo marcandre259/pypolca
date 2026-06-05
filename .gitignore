@@ -36,5 +36,6 @@ AGENTS.md
 .cache/
 package-lock.json
 .cache
-docs/
+docs/_doxygen/
+docs/build/
 compile_commands.json
