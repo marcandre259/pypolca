@@ -86,6 +86,8 @@ jobs:
       - name: Install system deps
         run: sudo apt-get install -y ninja-build
 
+      - run: uv pip install scikit_build_core
+
       - name: Build with ASAN
         env:
           CXXFLAGS: "-fsanitize=address -fno-omit-frame-pointer -g"
