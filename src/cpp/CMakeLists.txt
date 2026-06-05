@@ -1,7 +1,7 @@
 # C++ library + pybind11 module
 
 # Core static library (algorithm code, no Python)
-add_library(pypolca_core OBJECT
+add_library(pypolca_core STATIC
     core/math_ops.cpp
     core/em_engine.cpp
 )
