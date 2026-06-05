@@ -34,6 +34,11 @@ dev = [
     "pytest-cov",
     "mypy",
     "ruff",
+]
+test = [
+    "pytest>=7.0",
+    "numpy",
+    "polars",
     "scipy",
 ]
 
@@ -45,8 +50,8 @@ cmake.args = ["-GNinja", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
 wheel.packages = ["pypolca"]
 
 [tool.cibuildwheel]
-test-extras = "dev"
-test-command = "pytest {project}/tests -x -q"
+test-command = "pytest {project}/tests -x -q --ignore={project}/tests/python/test_r_comparison.py"
+test-requires = ["pytest", "numpy", "polars"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]

@@ -37,3 +37,4 @@ AGENTS.md
 package-lock.json
 .cache
 docs/
+compile_commands.json
