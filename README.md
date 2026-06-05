@@ -105,7 +105,7 @@ Comparison of `pypolca` (C++, with/without SE) vs R's `poLCA` on the `cheating` 
 | 2,000  | 5     | 2       | —        | —                 | —        | —               | —        |
 | 10,000 | 5     | 2       | —        | —                 | —        | —               | —        |
 
-> *Results TBD — run `python benchmark.py` and `python benchmark_scaling.py` to populate with fresh numbers (requires R with `poLCA` and `jsonlite` installed). Speed-up is relative to R `poLCA`.*
+> *Results TBD — run `python scripts/benchmark.py` and `python scripts/benchmark_scaling.py` to populate with fresh numbers (requires R with `poLCA` and `jsonlite` installed). Speed-up is relative to R `poLCA`.*
 
 ## Datasets
 
