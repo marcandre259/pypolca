@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Deep parity: compare VCE matrix, score matrix between pypolca and R."""
-import polars as pl
 import numpy as np
+import polars as pl
+
 from pypolca._core import Data, fit_em
 
 # Load cheating data
@@ -63,7 +64,6 @@ print("\n=== params.vecprobs ===")
 print(raw.params.vecprobs)
 
 # Now compute scores manually in Python for verification
-from pypolca._core import e_step, compute_prior_from_beta
 
 N = cpp_data.n_obs()
 J = cpp_data.n_items()
@@ -104,9 +104,9 @@ for r in range(R):
 
 # Beta score
 for r in range(1, R):
-    for l in range(S):
+    for s in range(S):
         for i in range(N):
-            scores[i, col] = cpp_data.x[i, l] * (posterior[i, r] - prior[i, r])
+            scores[i, col] = cpp_data.x[i, s] * (posterior[i, r] - prior[i, r])
         col += 1
 
 info_py = scores.T @ scores
@@ -124,7 +124,6 @@ try:
 
     print("\nvecprobs_se manual (sqrt diag after delta):")
     # Build Jacobian and compute probs SE manually
-    from pypolca._core import e_step, compute_log_ylik
 
     # Jacobian: softmax, drop first col
     total_probs = R * n_choices

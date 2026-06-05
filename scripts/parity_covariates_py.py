@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Parity: pypolca with covariates (GPA) on cheating data."""
-import polars as pl
+
 import numpy as np
+import polars as pl
+
 from pypolca._core import Data, fit_em
 
-df = pl.read_csv("/tmp/polca_cheating_test.csv", null_values=["NA"])
+df = pl.read_csv("pypolca/data/cheating.csv", null_values=["NA"])
 
 # Drop rows with NA in GPA
 df = df.drop_nulls(subset=["GPA"])
@@ -40,8 +42,9 @@ cpp_data.y = y_mat
 cpp_data.x = x_mat
 cpp_data.num_choices = num_choices
 
-raw = fit_em(cpp_data, nclass=2, maxiter=1000, tol=1e-10,
-             probs_start=probs_start_py, seed=42, calc_se=True)
+raw = fit_em(
+    cpp_data, nclass=2, maxiter=1000, tol=1e-10, probs_start=probs_start_py, seed=42, calc_se=True
+)
 
 print("=== LOGLIK ===")
 print(raw.loglik)
@@ -55,8 +58,8 @@ print(raw.P_se)
 print("\n=== params.beta ===")
 print(raw.params.beta)
 
-print("\n=== beta_se ===")
-print(raw.beta_se)
+print("\n=== coeff_se ===")
+print(raw.coeff_se)
 
 print("\n=== beta_V ===")
 print(raw.beta_V)

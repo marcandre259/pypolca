@@ -1,4 +1,10 @@
+---
+tags: [debugging, ylik, bug]
+---
+
 # Debugging `compute_ylik` in pypoLCA
+
+> Related: [[MATH_OPS_REVIEW]], [[EM_ENGINE_REVIEW]]
 
 ## Bugs already visible in `src/cpp/core/math_ops.cpp`
 

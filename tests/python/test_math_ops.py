@@ -6,12 +6,12 @@ import pytest
 from pypolca._core import (
     Data,
     Params,
+    compute_beta_derivatives,
+    compute_prior_from_beta,
     compute_ylik,
     e_step,
     m_step_probs,
-    compute_prior_from_beta,
     update_beta,
-    compute_beta_derivatives,
 )
 
 

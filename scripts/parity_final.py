@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Final parity summary: compare pypolca vs R poLCA on cheating data."""
-import polars as pl
+
 import numpy as np
+import polars as pl
+
 from pypolca._core import Data, fit_em
 
 print("=" * 70)
@@ -30,24 +32,35 @@ cpp_data.y = y_mat
 cpp_data.x = np.ones((y_mat.shape[0], 1), dtype=np.float64)
 cpp_data.num_choices = [2, 2, 2, 2]
 
-raw = fit_em(cpp_data, nclass=2, maxiter=1000, tol=1e-10,
-             probs_start=probs_start_py, seed=42, calc_se=True)
+raw = fit_em(
+    cpp_data, nclass=2, maxiter=1000, tol=1e-10, probs_start=probs_start_py, seed=42, calc_se=True
+)
 
 print(f"  loglik:     {raw.loglik:.6f}  (R: -440.0271)")
 print(f"  converged:  {raw.converged}")
 print(f"  iters:      {raw.iterations}")
 
 # Compare vecprobs_se
-r_se_intercept = np.array([
-    0.02941271, 0.02941271,  # item 1, class 0
-    0.03118501, 0.03118501,  # item 2, class 0
-    0.01516346, 0.01516346,  # item 3, class 0
-    0.02643547, 0.02643547,  # item 4, class 0
-    0.18727617, 0.18727617,  # item 1, class 1
-    0.18239628, 0.18239628,  # item 2, class 1
-    0.08797450, 0.08797450,  # item 3, class 1
-    0.10029747, 0.10029747,  # item 4, class 1
-])
+r_se_intercept = np.array(
+    [
+        0.02941271,
+        0.02941271,  # item 1, class 0
+        0.03118501,
+        0.03118501,  # item 2, class 0
+        0.01516346,
+        0.01516346,  # item 3, class 0
+        0.02643547,
+        0.02643547,  # item 4, class 0
+        0.18727617,
+        0.18727617,  # item 1, class 1
+        0.18239628,
+        0.18239628,  # item 2, class 1
+        0.08797450,
+        0.08797450,  # item 3, class 1
+        0.10029747,
+        0.10029747,  # item 4, class 1
+    ]
+)
 py_se_intercept = np.array(raw.vecprobs_se)
 max_diff = np.max(np.abs(py_se_intercept - r_se_intercept))
 print(f"  probs_se max abs diff: {max_diff:.2e}")
@@ -68,24 +81,35 @@ cpp_data2.y = y_mat2
 cpp_data2.x = x_mat2
 cpp_data2.num_choices = [2, 2, 2, 2]
 
-raw2 = fit_em(cpp_data2, nclass=2, maxiter=1000, tol=1e-10,
-              probs_start=probs_start_py, seed=42, calc_se=True)
+raw2 = fit_em(
+    cpp_data2, nclass=2, maxiter=1000, tol=1e-10, probs_start=probs_start_py, seed=42, calc_se=True
+)
 
 print(f"  loglik:     {raw2.loglik:.6f}  (R: -429.6384)")
 print(f"  converged:  {raw2.converged}")
 print(f"  iters:      {raw2.iterations}")
 
 # Compare probs_se
-r_se_cov = np.array([
-    0.01255233, 0.01255233,  # item 1, class 0
-    0.01894220, 0.01894220,  # item 2, class 0
-    0.01393974, 0.01393974,  # item 3, class 0
-    0.02672687, 0.02672687,  # item 4, class 0
-    0.12572255, 0.12572255,  # item 1, class 1
-    0.09807088, 0.09807088,  # item 2, class 1
-    0.07333183, 0.07333183,  # item 3, class 1
-    0.08743647, 0.08743647,  # item 4, class 1
-])
+r_se_cov = np.array(
+    [
+        0.01255233,
+        0.01255233,  # item 1, class 0
+        0.01894220,
+        0.01894220,  # item 2, class 0
+        0.01393974,
+        0.01393974,  # item 3, class 0
+        0.02672687,
+        0.02672687,  # item 4, class 0
+        0.12572255,
+        0.12572255,  # item 1, class 1
+        0.09807088,
+        0.09807088,  # item 2, class 1
+        0.07333183,
+        0.07333183,  # item 3, class 1
+        0.08743647,
+        0.08743647,  # item 4, class 1
+    ]
+)
 py_se_cov = np.array(raw2.vecprobs_se)
 max_diff = np.max(np.abs(py_se_cov - r_se_cov))
 print(f"  probs_se max abs diff: {max_diff:.2e}")
@@ -120,13 +144,15 @@ print(f"  pypolca:\n{py_beta_V}")
 print(f"  R:\n{r_beta_V}")
 
 # Compare posterior
-r_post_head = np.array([
-    [0.9408947, 0.05910535],
-    [0.9408947, 0.05910535],
-    [0.9408947, 0.05910535],
-    [0.9408947, 0.05910535],
-    [0.9408947, 0.05910535],
-])
+r_post_head = np.array(
+    [
+        [0.9408947, 0.05910535],
+        [0.9408947, 0.05910535],
+        [0.9408947, 0.05910535],
+        [0.9408947, 0.05910535],
+        [0.9408947, 0.05910535],
+    ]
+)
 py_post_head = np.array(raw2.posterior)[:5, :]
 max_post_diff = np.max(np.abs(py_post_head - r_post_head))
 print(f"  posterior max abs diff: {max_post_diff:.2e}")

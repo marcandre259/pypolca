@@ -1,8 +1,15 @@
+---
+date: 2026-05-11
+tags: [review, cpp, em, bug]
+---
+
 # Review of `src/cpp/core/em_engine.cpp`
 
 **File:** `src/cpp/core/em_engine.cpp`  
 **Date:** 2026-05-11  
 **Status:** 🔴 **Critical bugs present — do not use as-is.**
+
+> See also: [[EM_LOOP_LIKELIHOOD_DROP_INVESTIGATION]], [[MATH_OPS_REVIEW]], [[OPTIMIZATION_ALGORITHM]]
 
 ---
 

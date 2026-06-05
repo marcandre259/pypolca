@@ -1,3 +1,8 @@
+---
+date: 2026-05-08
+tags: [math, numerics, beta]
+---
+
 # Impact of Log-Likelihood Conversion on Beta Gradients/Hessians
 
 **Date:** 2026-05-08  

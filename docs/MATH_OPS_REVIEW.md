@@ -1,3 +1,8 @@
+---
+date: 2026-05-08
+tags: [review, cpp, math-ops, bug]
+---
+
 # Code Review: `math_ops.cpp` / `math_ops.h`
 
 **Date:** 2026-05-08 (final revision)  

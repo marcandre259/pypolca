@@ -39,7 +39,7 @@ data.num_choices = [K] * J
 
 # --- Fit model ---
 print("Fitting 2-class LCA model...")
-result = fit_em(data, nclass=2, maxiter=200, tol=1e-8, verbose=True)
+result = fit_em(data, nclass=2, maxiter=200, tol=1e-8)
 
 print(f"\nConverged: {result.converged}")
 print(f"Iterations: {result.iterations}")
@@ -55,7 +55,7 @@ try:
         y,
         schema=[f"Y{j + 1}" for j in range(J)],
     )
-    result2 = fit("Y1 + Y2 + Y3 + Y4 ~ 1", df, nclass=2, verbose=False)
+    result2 = fit("Y1 + Y2 + Y3 + Y4 ~ 1", df, nclass=2)
     print(f"\nHigh-level API result: {result2}")
     print(f"Class shares: {result2.P}")
 except Exception as e:

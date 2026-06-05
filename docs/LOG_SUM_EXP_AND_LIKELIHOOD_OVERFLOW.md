@@ -1,3 +1,7 @@
+---
+tags: [math, numerics, em, log-sum-exp]
+---
+
 # Log-Sum-Exp, Softmax, and Likelihood Underflow in the EM Engine
 
 > **Context:** Notes from implementing `compute_prior_from_beta`, `compute_ylik`, and the E-step in the C++ EM engine.

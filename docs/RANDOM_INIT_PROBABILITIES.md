@@ -1,4 +1,10 @@
+---
+tags: [implementation, initialization, probs]
+---
+
 # Random Initialization of Response Probabilities
+
+> This is the expanded version with full derivations. For the concise version see [[RANDOM_INITIALIZATION]].
 
 ## Directives
 

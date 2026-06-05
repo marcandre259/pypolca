@@ -1,4 +1,5 @@
 import numpy as np
+
 from pypolca._core import Data, Params, compute_ylik
 
 data = Data()

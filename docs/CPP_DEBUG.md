@@ -1,3 +1,7 @@
+---
+tags: [cpp, debug, build-system]
+---
+
 # C++ Development & Debug Guide
 
 This project uses **scikit-build-core** + **CMake** + **pybind11** to compile C++17 code and expose it as a Python extension module (`pypolca._core`).

@@ -18,6 +18,7 @@ Usage::
 
 from enum import StrEnum
 from importlib.resources import files as _files
+from typing import Any
 
 import polars as pl
 
@@ -58,7 +59,7 @@ class Dataset(StrEnum):
 
 
 # Column descriptions for use in docstrings / help
-_DATASET_META: dict[Dataset, dict] = {
+_DATASET_META: dict[Dataset, dict[str, Any]] = {
     Dataset.CARCINOMA: {
         "description": "Diagnoses of carcinoma by 7 pathologists, 118 slides.",
         "columns": {
@@ -170,14 +171,12 @@ def load_dataset(name: Dataset | str) -> pl.DataFrame:
             ds = Dataset(name.lower())
         except ValueError:
             valid = ", ".join(Dataset)
-            raise ValueError(
-                f"Unknown dataset {name!r}. Valid options: {valid}"
-            ) from None
+            raise ValueError(f"Unknown dataset {name!r}. Valid options: {valid}") from None
 
-    return pl.read_csv(_DATA_DIR / f"{ds.value}.csv", null_values="NA")
+    return pl.read_csv(str(_DATA_DIR / f"{ds.value}.csv"), null_values="NA")
 
 
-def get_dataset_info(name: Dataset | str) -> dict:
+def get_dataset_info(name: Dataset | str) -> dict[str, Any]:
     """Return metadata for a dataset (description, columns, source, example).
 
     Parameters

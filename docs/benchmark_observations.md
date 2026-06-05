@@ -1,3 +1,7 @@
+---
+tags: [performance, benchmark, python]
+---
+
 # Benchmark Observations: pypolca vs R poLCA
 
 ## Baseline (before any fixes)

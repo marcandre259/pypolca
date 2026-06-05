@@ -1,3 +1,7 @@
+---
+tags: [cpp, eigen, reference]
+---
+
 # Eigen Cheatsheet
 
 Quick reference for common Eigen C++ operations (dynamic dense types).

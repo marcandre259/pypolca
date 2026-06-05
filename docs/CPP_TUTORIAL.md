@@ -1,3 +1,8 @@
+---
+date: 2026-05-11
+tags: [cpp, tutorial, build-system, pybind11]
+---
+
 # pypoLCA C++ & Python Bindings — A Beginner's Tutorial
 
 > **Goal:** By the end of this document you will understand (1) how the C++ code in this project gets compiled, and (2) how that C++ code talks to Python. No prior knowledge of CMake, pybind11, or build systems is assumed.

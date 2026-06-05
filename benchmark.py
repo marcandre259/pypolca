@@ -24,7 +24,7 @@ def _flatten_probs_start(probs_start_list):
 
 
 def build_r_benchmark_script(n_runs: int) -> str:
-    return f'''
+    return f"""
 library(poLCA)
 library(jsonlite)
 
@@ -54,7 +54,7 @@ for (i in seq_len({n_runs})) {{
 out <- list(mean_time=mean(times), median_time=median(times),
             sd_time=sd(times), loglik=mean(logliks))
 cat(toJSON(out, digits=12))
-'''
+"""
 
 
 def run_r_benchmark(n_runs: int = 20) -> dict:
@@ -65,7 +65,10 @@ def run_r_benchmark(n_runs: int = 20) -> dict:
     try:
         result = subprocess.run(
             ["Rscript", r_file],
-            capture_output=True, text=True, check=True, timeout=120,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=120,
         )
         raw = json.loads(result.stdout)
         # jsonlite may wrap length-1 vectors
@@ -77,13 +80,15 @@ def run_r_benchmark(n_runs: int = 20) -> dict:
         os.unlink(r_file)
 
 
-def run_python_benchmark(df: pl.DataFrame, n_runs: int = 20) -> dict:
-    probs_start_py = _flatten_probs_start([
-        [[0.9, 0.1], [0.4, 0.6]],
-        [[0.9, 0.1], [0.4, 0.6]],
-        [[0.9, 0.1], [0.4, 0.6]],
-        [[0.9, 0.1], [0.4, 0.6]],
-    ])
+def run_python_benchmark(df: pl.DataFrame, n_runs: int = 20, calc_se: bool = True) -> dict:
+    probs_start_py = _flatten_probs_start(
+        [
+            [[0.9, 0.1], [0.4, 0.6]],
+            [[0.9, 0.1], [0.4, 0.6]],
+            [[0.9, 0.1], [0.4, 0.6]],
+            [[0.9, 0.1], [0.4, 0.6]],
+        ]
+    )
 
     times = []
     logliks = []
@@ -96,6 +101,7 @@ def run_python_benchmark(df: pl.DataFrame, n_runs: int = 20) -> dict:
             maxiter=1000,
             tol=1e-10,
             probs_start=probs_start_py,
+            calc_se=calc_se,
         )
         t1 = time.perf_counter()
         times.append(t1 - t0)
@@ -111,11 +117,11 @@ def run_python_benchmark(df: pl.DataFrame, n_runs: int = 20) -> dict:
 
 def main():
     # Export cheating data from R
-    r_export = '''
+    r_export = """
 library(poLCA)
 data(cheating)
 write.csv(cheating, "/tmp/polca_cheating_bench.csv", row.names=FALSE)
-'''
+"""
     subprocess.run(["Rscript", "-e", r_export], check=True, capture_output=True)
     df = pl.read_csv("/tmp/polca_cheating_bench.csv")
     for col in ["LIEEXAM", "LIEPAPER", "FRAUD", "COPYEXAM"]:
@@ -134,8 +140,8 @@ write.csv(cheating, "/tmp/polca_cheating_bench.csv", row.names=FALSE)
     print(f"  loglik = {r_res['loglik']:.4f}")
     print()
 
-    print("Running pypolca (C++) …")
-    py_res = run_python_benchmark(df, n_runs)
+    print("Running pypolca (C++, with SE) …")
+    py_res = run_python_benchmark(df, n_runs, calc_se=True)
     print(f"  mean   = {py_res['mean_time']:.4f} s")
     print(f"  median = {py_res['median_time']:.4f} s")
     print(f"  sd     = {py_res['sd_time']:.4f} s")
@@ -143,7 +149,18 @@ write.csv(cheating, "/tmp/polca_cheating_bench.csv", row.names=FALSE)
     print()
 
     speedup = r_res["mean_time"] / py_res["mean_time"]
-    print(f"Speed-up: {speedup:.1f}× faster")
+    print(f"Speed-up (with SE): {speedup:.1f}×")
+
+    print("\nRunning pypolca (C++, without SE) …")
+    py_res_nose = run_python_benchmark(df, n_runs, calc_se=False)
+    print(f"  mean   = {py_res_nose['mean_time']:.4f} s")
+    print(f"  median = {py_res_nose['median_time']:.4f} s")
+    print(f"  sd     = {py_res_nose['sd_time']:.4f} s")
+    print(f"  loglik = {py_res_nose['loglik']:.4f}")
+    print()
+
+    speedup_nose = r_res["mean_time"] / py_res_nose["mean_time"]
+    print(f"Speed-up (without SE): {speedup_nose:.1f}×")
 
 
 if __name__ == "__main__":

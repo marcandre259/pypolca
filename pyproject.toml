@@ -30,6 +30,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "pytest-cov",
+    "mypy",
+    "ruff",
     "scipy",
 ]
 
@@ -41,3 +44,36 @@ cmake.args = ["-GNinja", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint.isort]
+known-first-party = ["pypolca"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pypolca._core"
+ignore_missing_imports = true

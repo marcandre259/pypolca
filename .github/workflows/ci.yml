@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Python lint & format (fast, no build) ────────────────────────
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: uvx ruff check .
+      - run: uvx ruff format --check .
+
+  # ── Python type check (needs C++ build) ──────────────────────────
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - run: sudo apt-get install -y ninja-build
+      - run: uv pip install -e . --no-build-isolation
+      - run: uvx mypy pypolca/
+
+  # ── C++ format check ─────────────────────────────────────────────
+  lint-cpp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          find src -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) \
+            | xargs clang-format-18 --dry-run --Werror
+
+  # ── Build & test matrix ──────────────────────────────────────────
+  test:
+    needs: [lint-python, lint-cpp, typecheck]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install system deps (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y ninja-build
+
+      - name: Install system deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
+      - name: Build package
+        run: uv pip install -e . --no-build-isolation
+
+      - name: Install test deps
+        run: uv pip install pytest pytest-cov scipy
+
+      - name: Run tests with coverage
+        run: uv run pytest --cov=pypolca --cov-report=term-missing tests/
+
+  # ── AddressSanitizer (C++ memory safety) ─────────────────────────
+  asan:
+    needs: lint-python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install system deps
+        run: sudo apt-get install -y ninja-build
+
+      - name: Build with ASAN
+        env:
+          CXXFLAGS: "-fsanitize=address -fno-omit-frame-pointer -g"
+          LDFLAGS: "-fsanitize=address"
+        run: uv pip install -e . --no-build-isolation
+
+      - name: Install test deps
+        run: uv pip install pytest scipy
+
+      - name: Run tests under ASAN
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+        run: uv run pytest tests/
+
+  # ── Build wheels ─────────────────────────────────────────────────
+  build-wheels:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.22
+        env:
+          CIBW_BUILD: "cp313-*"
+          CIBW_SKIP: "*_i686 *-musllinux*"
+          CIBW_ARCHS_MACOS: "arm64 x86_64"
+          CIBW_TEST_REQUIRES: "pytest scipy"
+          CIBW_TEST_COMMAND: "pytest {package}/tests"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl

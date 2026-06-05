@@ -1,12 +1,10 @@
 """Utility functions for formula parsing and data preparation."""
 
-import re
-from typing import Tuple, List
 import numpy as np
 import polars as pl
 
 
-def build_design_matrix(formula: str, data: pl.DataFrame) -> Tuple[np.ndarray, np.ndarray, List[int]]:
+def build_design_matrix(formula: str, data: pl.DataFrame, na_rm: bool = True) -> tuple[np.ndarray, np.ndarray, list[int]]:
     """Parse a simple formula and build design matrices.
 
     Supports:
@@ -32,7 +30,11 @@ def build_design_matrix(formula: str, data: pl.DataFrame) -> Tuple[np.ndarray, n
     else:
         y_names = [v.strip() for v in lhs.split("+")]
 
-    y = data[y_names].to_numpy().astype(np.int32)
+    if na_rm:
+        y = data[y_names].to_numpy().astype(np.int32)
+    else:
+        # Nulls in manifest variables → 0 (missing indicator for EM engine)
+        y = data[y_names].fill_null(0).to_numpy().astype(np.int32)
 
     # Determine number of choices per item
     num_choices = []

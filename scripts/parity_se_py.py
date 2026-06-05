@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Parity test: run pypolca on cheating data, compare standard errors with R poLCA."""
-import sys
-import polars as pl
 import numpy as np
+import polars as pl
+
 from pypolca._core import Data, fit_em
 from pypolca.api import LCAResult
 

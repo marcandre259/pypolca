@@ -41,7 +41,7 @@ PYBIND11_MODULE(_core, m) {
       .def_readonly("error", &pypolca::Results::error)
       .def_readonly("vecprobs_se", &pypolca::Results::vecprobs_se)
       .def_readonly("P_se", &pypolca::Results::P_se)
-      .def_readonly("beta_se", &pypolca::Results::beta_se)
+      .def_readonly("coeff_se", &pypolca::Results::beta_se)
       .def_readonly("beta_V", &pypolca::Results::beta_V);
 
   // --- fit_em ---

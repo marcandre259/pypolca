@@ -9,7 +9,7 @@ import json
 import os
 import subprocess
 import tempfile
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -32,9 +32,9 @@ R_AVAILABLE = _r_available()
 
 def _build_r_script(
     data_json: str,
-    formula_items: List[str],
+    formula_items: list[str],
     nclass: int,
-    probs_start: Optional[List[List[List[float]]]],
+    probs_start: list[list[list[float]]] | None,
     maxiter: int,
     tol: float,
 ) -> str:
@@ -79,12 +79,12 @@ cat(toJSON(out, digits=12, matrix="rowmajor"))
 
 def run_r_polca(
     df: pl.DataFrame,
-    formula_items: List[str],
+    formula_items: list[str],
     nclass: int,
-    probs_start: Optional[List[List[List[float]]]] = None,
+    probs_start: list[list[list[float]]] | None = None,
     maxiter: int = 1000,
     tol: float = 1e-10,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Run R poLCA and return parsed results."""
     # Convert polars DataFrame to JSON (list of dicts)
     records = df.select(formula_items).to_dicts()
@@ -115,7 +115,7 @@ def run_r_polca(
 
 
 def _flatten_probs_start(
-    probs_start_list: List[List[List[float]]]
+    probs_start_list: list[list[list[float]]]
 ) -> np.ndarray:
     """Convert R-style list-of-matrices to pypolca flat vector.
 
@@ -130,7 +130,7 @@ def _flatten_probs_start(
     return np.array(flat, dtype=np.float64)
 
 
-def _align_classes(py_probs: np.ndarray, r_probs, nclass: int, num_choices: List[int]) -> np.ndarray:
+def _align_classes(py_probs: np.ndarray, r_probs, nclass: int, num_choices: list[int]) -> np.ndarray:
     """Return a permutation array that reorders pypolca classes to match R classes.
 
     r_probs may be a list of matrices or a dict (from JSON) of matrices.
@@ -155,7 +155,7 @@ def _align_classes(py_probs: np.ndarray, r_probs, nclass: int, num_choices: List
     for r_py in range(nclass):
         for r_r in range(nclass):
             d = 0.0
-            for py_mat, r_mat in zip(py_mats, r_probs):
+            for py_mat, r_mat in zip(py_mats, r_probs, strict=False):
                 r_vec = np.array(r_mat[r_r], dtype=float)
                 d += np.sum((py_mat[r_py] - r_vec) ** 2)
             dist[r_py, r_r] = d

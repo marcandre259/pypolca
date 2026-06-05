@@ -23,7 +23,7 @@ def _flatten_probs_start(probs_start_list):
 
 
 def build_r_benchmark_script(data_json: str, n_runs: int) -> str:
-    return f'''
+    return f"""
 library(poLCA)
 library(jsonlite)
 
@@ -46,7 +46,7 @@ for (i in seq_len({n_runs})) {{
   times[i] <- as.numeric(t1 - t0, units="secs")
 }}
 cat(mean(times), "\n")
-'''
+"""
 
 
 def run_r_benchmark(df: pl.DataFrame, n_runs: int = 10) -> dict:
@@ -59,7 +59,10 @@ def run_r_benchmark(df: pl.DataFrame, n_runs: int = 10) -> dict:
     try:
         result = subprocess.run(
             ["Rscript", r_file],
-            capture_output=True, text=True, check=True, timeout=300,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=300,
         )
         times = [float(x) for x in result.stdout.strip().split()]
         return {
@@ -71,10 +74,8 @@ def run_r_benchmark(df: pl.DataFrame, n_runs: int = 10) -> dict:
         os.unlink(r_file)
 
 
-def run_python_benchmark(df: pl.DataFrame, n_runs: int = 10) -> dict:
-    probs_start_py = _flatten_probs_start([
-        [[0.9, 0.1], [0.4, 0.6]] for _ in range(5)
-    ])
+def run_python_benchmark(df: pl.DataFrame, n_runs: int = 10, calc_se: bool = True) -> dict:
+    probs_start_py = _flatten_probs_start([[[0.9, 0.1], [0.4, 0.6]] for _ in range(5)])
     times = []
     for _ in range(n_runs):
         t0 = time.perf_counter()
@@ -85,6 +86,7 @@ def run_python_benchmark(df: pl.DataFrame, n_runs: int = 10) -> dict:
             maxiter=100,
             tol=1e-8,
             probs_start=probs_start_py,
+            calc_se=calc_se,
         )
         t1 = time.perf_counter()
         times.append(t1 - t0)
@@ -101,23 +103,38 @@ def main():
         np.random.seed(42)
         # Generate synthetic 5-item binary data
         y = np.random.randint(1, 3, size=(n, 5), dtype=np.int64)
-        df = pl.DataFrame({
-            "Y1": y[:, 0], "Y2": y[:, 1], "Y3": y[:, 2],
-            "Y4": y[:, 3], "Y5": y[:, 4],
-        })
+        df = pl.DataFrame(
+            {
+                "Y1": y[:, 0],
+                "Y2": y[:, 1],
+                "Y3": y[:, 2],
+                "Y4": y[:, 3],
+                "Y5": y[:, 4],
+            }
+        )
 
         n_runs = 5 if n >= 5000 else 10
         print(f"\nn={n}, 5 binary items, 2 classes ({n_runs} runs)")
         print("-" * 40)
 
         r_res = run_r_benchmark(df, n_runs)
-        print(f"R poLCA    mean={r_res['mean_time']:.4f}s  median={r_res['median_time']:.4f}s")
+        print(
+            f"R poLCA              mean={r_res['mean_time']:.4f}s  median={r_res['median_time']:.4f}s"
+        )
 
-        py_res = run_python_benchmark(df, n_runs)
-        print(f"pypolca    mean={py_res['mean_time']:.4f}s  median={py_res['median_time']:.4f}s")
+        py_res_se = run_python_benchmark(df, n_runs, calc_se=True)
+        print(
+            f"pypolca (with SE)    mean={py_res_se['mean_time']:.4f}s  median={py_res_se['median_time']:.4f}s"
+        )
 
-        speedup = r_res["mean_time"] / py_res["mean_time"]
-        print(f"Speed-up: {speedup:.1f}×")
+        py_res_nose = run_python_benchmark(df, n_runs, calc_se=False)
+        print(
+            f"pypolca (no SE)      mean={py_res_nose['mean_time']:.4f}s  median={py_res_nose['median_time']:.4f}s"
+        )
+
+        speedup_se = r_res["mean_time"] / py_res_se["mean_time"]
+        speedup_nose = r_res["mean_time"] / py_res_nose["mean_time"]
+        print(f"Speed-up (with SE): {speedup_se:.1f}×  (no SE): {speedup_nose:.1f}×")
 
 
 if __name__ == "__main__":

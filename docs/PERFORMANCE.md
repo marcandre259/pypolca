@@ -1,3 +1,7 @@
+---
+tags: [performance, r, optimization]
+---
+
 # poLCA Performance Analysis
 
 This document assesses the speed/performance gains from the package's C functions, identifies other components that could be sped up, and describes how to measure performance in RStudio.

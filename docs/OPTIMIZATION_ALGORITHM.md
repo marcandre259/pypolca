@@ -1,3 +1,7 @@
+---
+tags: [math, algorithm, em, reference]
+---
+
 # Optimization Algorithm in `poLCA`
 
 This document translates the core optimization routine of the `poLCA` package (latent class analysis with polytomous outcomes) into mathematical notation. The implementation lives in `R/poLCA.R`, `src/poLCA.c`, and the surrounding R wrappers (`R/poLCA.postClass.C.R`, `R/poLCA.probHat.C.R`, `R/poLCA.dLL2dBeta.C.R`, `R/poLCA.updatePrior.R`).
