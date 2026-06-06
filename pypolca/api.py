@@ -84,7 +84,8 @@ class LCAResult:
         S = n_beta // (n_classes - 1) if n_classes > 1 and n_beta > 0 else 0
 
         if S <= 1:
-            return int(n_probs)
+            # Intercept-only: probs + (R-1) class share parameters
+            return int(n_probs + (n_classes - 1))
 
         n_betas = S * (n_classes - 1)
 
@@ -333,6 +334,22 @@ class LCAResult:
         return (obs, exp, pats)
 
 
+def _compute_expected_npar(num_choices: list[int], nclass: int, n_covariates: int) -> int:
+    """Compute expected number of parameters before fitting.
+
+    Mirrors R poLCA npar formula:
+        npar = (R * sum(K.j - 1)) + (R - 1)                 # intercept-only
+        npar = (R * sum(K.j - 1)) + (S * (R - 1))           # with covariates
+    where S = 1 + n_covariates (design matrix includes intercept).
+    """
+    R = nclass
+    n_probs = R * sum(k - 1 for k in num_choices)
+    if n_covariates == 0:
+        return n_probs + (R - 1)
+    S = n_covariates + 1  # +1 for intercept column
+    return n_probs + S * (R - 1)
+
+
 def fit(
     formula: str,
     data: pl.DataFrame,
@@ -406,6 +423,17 @@ def fit(
     y_int = y_mat.astype(np.int32)
     if y_int.min() < 0:
         raise ValueError("Response variables must be non-negative integers (0 = missing).")
+
+    # Pre-fit check: reject if number of parameters exceeds number of observations.
+    # Matches R poLCA alert: "number of parameters exceeds number of observations."
+    N = y_int.shape[0]
+    n_covariates = 0 if rhs == "1" else len(x_names)
+    expected_npar = _compute_expected_npar(num_choices, nclass, n_covariates)
+    if expected_npar > N:
+        raise ValueError(
+            f"Number of parameters ({expected_npar}) exceeds number of "
+            f"observations ({N}). Model cannot be estimated."
+        )
 
     cpp_data = Data()
     cpp_data.y = y_int

@@ -111,8 +111,9 @@ class TestFitStatistics:
 
     def test_npar_intercept_only(self, simple_model):
         result, _df = simple_model
-        # 2 classes, 2 items, 2 categories each: 2*(2-1)*2 = 4 free probs
-        assert result.npar == 4
+        # 2 classes, 2 items, 2 categories each:
+        # probs: 2*1 + 2*1 = 4, class shares: (2-1) = 1 → 5 total
+        assert result.npar == 5
 
     def test_npar_with_covariates(self, covariate_model):
         result, _df = covariate_model

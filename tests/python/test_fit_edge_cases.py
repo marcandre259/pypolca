@@ -203,8 +203,8 @@ class TestPolytomousItems:
         assert len(result.probs) == 2
         assert result.probs[0].shape == (2, 2)
         assert result.probs[1].shape == (2, 3)
-        # npar: 2*(2-1) + 2*(3-1) = 2 + 4 = 6
-        assert result.npar == 6
+        # npar: 2*(2-1) + 2*(3-1) + (2-1) = 2 + 4 + 1 = 7
+        assert result.npar == 7
 
     def test_npar_mixed_categories(self):
         """npar with mixed category counts."""
@@ -214,8 +214,8 @@ class TestPolytomousItems:
         Y2 = np.random.choice([1, 2, 3], N, p=[0.4, 0.3, 0.3])
         df = pl.DataFrame({"Y1": Y1, "Y2": Y2})
         result = fit("cbind(Y1, Y2) ~ 1", df, nclass=3, seed=42)
-        # npar: 3*(2-1) + 3*(3-1) = 3 + 6 = 9
-        assert result.npar == 9
+        # npar: 3*(2-1) + 3*(3-1) + (3-1) = 3 + 6 + 2 = 11
+        assert result.npar == 11
 
 
 # ── missing data ───────────────────────────────────────────────────
@@ -440,13 +440,12 @@ class TestFitErrors:
             fit("cbind(Y1, Y2) ~ 1", df, nclass=2)
 
     def test_nclass_too_large(self):
-        """nclass >= N should still run (or fail gracefully)."""
+        """nclass=3 with N=2 is overparameterized → pre-fit ValueError."""
         np.random.seed(42)
         df = pl.DataFrame({"Y1": [1, 2], "Y2": [2, 1]})
-        # nclass=3 with N=2 may be underdetermined but should not crash
-        result = fit("cbind(Y1, Y2) ~ 1", df, nclass=3, seed=42, nrep=1, max_restarts=1)
-        # Just ensure it returns a result without crashing
-        assert result is not None
+        # nclass=3, N=2: npar = 3*2 + (3-1) = 8 > 2 → rejected before fitting
+        with pytest.raises(ValueError, match="Number of parameters"):
+            fit("cbind(Y1, Y2) ~ 1", df, nclass=3, seed=42, nrep=1, max_restarts=1)
 
 
 # ── large-ish data ─────────────────────────────────────────────────
@@ -470,3 +469,109 @@ class TestLargerData:
         assert result.converged
         assert len(result.probs) == 3
         assert result.posterior.shape == (500, 2)
+
+
+# ── pre-fit degrees of freedom check ───────────────────────────────
+
+
+class TestPreFitDFCheck:
+    """Pre-fit check: reject when npar > N (R poLCA prints ALERT post-fit)."""
+
+    def test_npar_exceeds_N_intercept_only(self):
+        """npar > N should raise ValueError before fitting (intercept-only)."""
+        # 2 binary items, 3 classes: npar = 3*2 + 2 = 8, with N=7 → reject
+        np.random.seed(42)
+        df = pl.DataFrame(
+            {
+                "Y1": np.random.choice([1, 2], 7),
+                "Y2": np.random.choice([1, 2], 7),
+            }
+        )
+        with pytest.raises(ValueError, match="Number of parameters"):
+            fit("cbind(Y1, Y2) ~ 1", df, nclass=3, seed=42)
+
+    def test_npar_exceeds_N_with_covariates(self):
+        """npar > N should raise ValueError before fitting (with covariates)."""
+        # 1 binary item, 2 classes, 1 covariate:
+        # npar = 2*1 + (1+1)*1 = 2 + 2 = 4, with N=3 → reject
+        np.random.seed(42)
+        df = pl.DataFrame(
+            {
+                "Y1": np.random.choice([1, 2], 3),
+                "X1": np.random.randn(3),
+            }
+        )
+        with pytest.raises(ValueError, match="Number of parameters"):
+            fit("cbind(Y1) ~ X1", df, nclass=2, seed=42)
+
+    def test_npar_exceeds_N_two_covariates(self):
+        """npar > N with multiple covariates."""
+        # 2 binary items, 2 classes, 2 covariates:
+        # npar = 2*2 + (1+2)*1 = 4 + 3 = 7, with N=6 → reject
+        np.random.seed(42)
+        df = pl.DataFrame(
+            {
+                "Y1": np.random.choice([1, 2], 6),
+                "Y2": np.random.choice([1, 2], 6),
+                "X1": np.random.randn(6),
+                "X2": np.random.randn(6),
+            }
+        )
+        with pytest.raises(ValueError, match="Number of parameters"):
+            fit("Y1 + Y2 ~ X1 + X2", df, nclass=2, seed=42)
+
+    def test_npar_equals_N_passes(self):
+        """npar == N should not raise (barely identified model)."""
+        # 2 binary items, 2 classes: npar = 2*2 + 1 = 5, N=5 → passes
+        np.random.seed(42)
+        df = pl.DataFrame(
+            {
+                "Y1": np.random.choice([1, 2], 5),
+                "Y2": np.random.choice([1, 2], 5),
+            }
+        )
+        # Should not raise
+        result = fit("cbind(Y1, Y2) ~ 1", df, nclass=2, seed=42, nrep=1)
+        assert result is not None
+        assert np.isfinite(result.loglik)
+
+    def test_npar_well_within_N_passes(self):
+        """Normal case: npar << N should fit without issues."""
+        np.random.seed(42)
+        df = pl.DataFrame(
+            {
+                "Y1": np.random.choice([1, 2], 100),
+                "Y2": np.random.choice([1, 2], 100),
+            }
+        )
+        # npar = 5, N = 100 — well within bounds
+        result = fit("cbind(Y1, Y2) ~ 1", df, nclass=2, seed=42)
+        assert result.converged
+        assert result.npar == 5
+
+    def test_npar_equals_N_covariates_passes(self):
+        """npar == N with covariates should pass."""
+        # 1 binary item, 2 classes, 1 covariate:
+        # npar = 2*1 + 2*1 = 4, N=4 → passes
+        np.random.seed(42)
+        df = pl.DataFrame(
+            {
+                "Y1": np.random.choice([1, 2], 4),
+                "X1": np.random.randn(4),
+            }
+        )
+        result = fit("cbind(Y1) ~ X1", df, nclass=2, seed=42, nrep=1)
+        assert result is not None
+        assert np.isfinite(result.loglik)
+
+    def test_error_message_includes_counts(self):
+        """Error message should include both npar and N values."""
+        df = pl.DataFrame(
+            {
+                "Y1": np.random.choice([1, 2], 3),
+                "Y2": np.random.choice([1, 2], 3),
+            }
+        )
+        # 2 binary items, nclass=3: npar = 3*2 + 2 = 8, N=3
+        with pytest.raises(ValueError, match=r"Number of parameters \(8\).*observations \(3\)"):
+            fit("cbind(Y1, Y2) ~ 1", df, nclass=3, seed=42)
