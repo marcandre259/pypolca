@@ -32,6 +32,8 @@ LCA's latent variables are categorical (e.g., *class 1* = "non-cheaters", *class
 
 LCA can be extended with covariates that predict class membership. `pypoLCA` fits latent class regression using the same hybrid EM / Newton-Raphson algorithm as R's `poLCA`. The EM loop alternates expected-posterior and maximisation steps. Response probabilities have a closed-form M-step, which guarantees the standard EM ascent property. Covariate coefficients lack a closed form and are updated within each M-step via Newton-Raphson (NR). Unlike pure EM, the NR step can overshoot and cause a likelihood drop. The implementation detects this and restarts with perturbed starting values (`max_restarts`). In any case, the algorithm finds only a local maximum, so multiple random starts (`nrep`) are recommended.
 
+### Standard errors
+
 Standard errors are provided for all parameter estimates (i.e. conditional response probabilities, prior class probabilities, and (when covariates are present) regression coefficients). SEs are computed from the observed information matrix via the outer product of the individual score contributions, then transformed to probability space via the delta method. This matches the approach used by R's `poLCA`.
 
 ## Install
