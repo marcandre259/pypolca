@@ -96,14 +96,24 @@ The EM engine and standard error computation are written in C++17 (Eigen for lin
 
 ## Benchmarks
 
-Comparison of `pypolca` (C++, with/without SE) vs R's `poLCA` on the `cheating` dataset (N=319, 4 binary items, 2 classes). Timings are means over 20 runs.
+### Intercept-only model (synthetic binary data)
+
+Comparison of `pypolca` (C++, with/without SE) vs R's `poLCA` on synthetic 5-item binary data at increasing N, 2 classes. Timings are means over 10 runs (5 runs for N=10,000).
 
 | N      | Items | Classes | R poLCA  | pypolca (with SE) | Speed-up | pypolca (no SE) | Speed-up |
 |--------|-------|---------|----------|-------------------|----------|-----------------|----------|
-| 319    | 4     | 2       | —        | —                 | —        | —               | —        |
-| 500    | 5     | 2       | —        | —                 | —        | —               | —        |
-| 2,000  | 5     | 2       | —        | —                 | —        | —               | —        |
-| 10,000 | 5     | 2       | —        | —                 | —        | —               | —        |
+| 319    | 4     | 2       | 0.025 s  | 0.012 s           | 2.0×     | 0.010 s         | 2.5×     |
+| 500    | 5     | 2       | 0.013 s  | 0.006 s           | 2.2×     | 0.006 s         | 2.2×     |
+| 2,000  | 5     | 2       | 0.041 s  | 0.021 s           | 1.9×     | 0.021 s         | 1.9×     |
+| 10,000 | 5     | 2       | 0.193 s  | 0.105 s           | 1.8×     | 0.103 s         | 1.9×     |
+
+### Covariate model (`election` dataset)
+
+Full latent class regression: 12 polytomous items (4-point scale), 5 covariates, 3 classes, N=880 (complete cases). Timings are means over 20 runs.
+
+| Model                        | R poLCA  | pypolca (with SE) | Speed-up | pypolca (no SE) | Speed-up |
+|------------------------------|----------|-------------------|----------|-----------------|----------|
+| `~ VOTE3 + AGE + EDUC + GENDER + PARTY` | 0.091 s  | 0.072 s           | 1.3×     | 0.082 s         | 1.1×     |
 
 ## Datasets
 

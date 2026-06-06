@@ -421,12 +421,16 @@ def fit(
         for attempt in range(max_restarts):
             current_seed = base_seed + attempt
 
+            # On retry, discard user-provided starting probs and generate
+            # fresh random starts (matching R poLCA's !firstrun behavior).
+            probs_for_attempt = pstart if attempt == 0 else np.array([], dtype=np.float64)
+
             raw = fit_em(
                 cpp_data,
                 nclass=nclass,
                 maxiter=maxiter,
                 tol=tol,
-                probs_start=pstart,
+                probs_start=probs_for_attempt,
                 beta_start=bstart,
                 seed=current_seed,
                 calc_se=calc_se,

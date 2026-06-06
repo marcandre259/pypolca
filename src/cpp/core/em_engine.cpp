@@ -125,6 +125,7 @@ Results fit_em(const Data &data, int nclass, int maxiter, double tol,
     }
 
     res.converged = converged;
+    res.error = error;
     res.loglik = log_lik_latest;
     res.iterations = n_iter;
     res.posterior = posterior;
