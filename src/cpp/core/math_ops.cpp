@@ -313,7 +313,8 @@ SEs compute_standard_errors(const Data &data, const Params &params,
     }
 
     Eigen::MatrixXd info = scores.transpose() * scores;
-    Eigen::MatrixXd VCE = info.completeOrthogonalDecomposition().pseudoInverse();
+    Eigen::LDLT<Eigen::MatrixXd> ldlt(info);
+    Eigen::MatrixXd VCE = ldlt.solve(Eigen::MatrixXd::Identity(D, D));
 
     // Delta-method
     int total_probs = R * n_choices;
