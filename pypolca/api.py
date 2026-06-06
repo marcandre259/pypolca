@@ -95,6 +95,11 @@ class LCAResult:
         if not isinstance(self._num_choices, list):
             return []
 
+        vecprobs_se = np.array(self._raw.vecprobs_se)
+        if vecprobs_se.size == 0:
+            n_classes = self.posterior.shape[1]
+            return [np.zeros((n_classes, k)) for k in self._num_choices]
+
         se_list = []
 
         n_classes = self.posterior.shape[1]
@@ -102,8 +107,8 @@ class LCAResult:
         pos = 0
         for k in self._num_choices:
             block_len = n_classes * k
-            block = self._raw.vecprobs_se[pos : pos + block_len]
-            se_list.append(np.array(block).reshape((n_classes, k)))
+            block = vecprobs_se[pos : pos + block_len]
+            se_list.append(block.reshape((n_classes, k)))
             pos += block_len
 
         return se_list
