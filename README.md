@@ -12,7 +12,7 @@ Polytomous variable latent class analysis (LCA) for Python, powered by a C++17 b
 
 ## What is latent class analysis?
 
-LCA is a statistical method that discovers latent (unobserved) categorical variables from a set of nominal responses. The core assumption is that observed responses are mutually independent conditionally on the latent variable — all dependencies between responses flow through the latent structure.
+LCA is a statistical method that discovers latent (unobserved) categorical variables from a set of nominal responses. The core assumption is that observed responses are mutually independent conditionally on the latent variable. 
 
 The model identifies two things:
 
