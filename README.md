@@ -113,7 +113,7 @@ Full latent class regression: 12 polytomous items (4-point scale), 5 covariates,
 
 | Model                        | R poLCA  | pypolca (with SE) | Speed-up | pypolca (no SE) | Speed-up |
 |------------------------------|----------|-------------------|----------|-----------------|----------|
-| `~ VOTE3 + AGE + EDUC + GENDER + PARTY` | 0.091 s  | 0.072 s           | 1.3×     | 0.082 s         | 1.1×     |
+| `~ VOTE3 + AGE + EDUC + GENDER + PARTY` | 0.085 s  | 0.058 s           | 1.4×     | 0.055 s         | 1.5×     |
 
 ## Datasets
 

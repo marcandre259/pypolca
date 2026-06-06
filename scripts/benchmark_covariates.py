@@ -151,7 +151,7 @@ def run_python_benchmark(df: pl.DataFrame, n_runs: int = 20, calc_se: bool = Tru
     probs_start = _make_py_probs_start()
     times = []
     logliks = []
-    for _ in range(n_runs):
+    for i in range(n_runs):
         t0 = time.perf_counter()
         res = fit(
             PY_FORMULA,
@@ -162,6 +162,7 @@ def run_python_benchmark(df: pl.DataFrame, n_runs: int = 20, calc_se: bool = Tru
             probs_start=probs_start,
             calc_se=calc_se,
             nrep=1,
+            seed=42 + i,
         )
         t1 = time.perf_counter()
         times.append(t1 - t0)
