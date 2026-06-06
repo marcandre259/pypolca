@@ -70,7 +70,11 @@ jobs:
         run: uv pip install pytest pytest-cov scipy
 
       - name: Run tests with coverage
-        run: uv run pytest --cov=pypolca --cov-report=term-missing tests/
+        run: uv run pytest --cov=pypolca --cov-report=term-missing --cov-report=xml tests/
+
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # ── Build wheels ─────────────────────────────────────────────────
   build-wheels:

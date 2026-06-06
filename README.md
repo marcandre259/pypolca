@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/marcandre259/pypolca/actions/workflows/ci.yml/badge.svg)](https://github.com/marcandre259/pypolca/actions/workflows/ci.yml)
 [![Docs](https://github.com/marcandre259/pypolca/actions/workflows/docs.yml/badge.svg)](https://marcandre259.github.io/pypolca/)
+[![codecov](https://codecov.io/gh/marcandre259/pypolca/branch/main/graph/badge.svg)](https://codecov.io/gh/marcandre259/pypolca)
 
 <p align="center">
   <img src="assets/pypolca-logo.png" alt="pypoLCA logo" width="400">
@@ -126,7 +127,7 @@ C++ bindings powered by [pybind11](https://github.com/pybind/pybind11). Linear a
 
 ## Contributing
 
-Contributions are welcome and appreciated. Please keep submissions tight and purposeful. The goal is to keep `pypoLCA` a focused, maintainable package. AI-assisted contributions are fine, but AI use doesn't excuse sloppy or verbose work; review your output before submitting a PR.
+Contributions are welcome and appreciated. Please keep submissions tight and purposeful. The goal is to keep `pypoLCA` a focused, maintainable package. AI-assisted contributions are fine, but AI use doesn't excuse sloppy or verbose work. Review your output before submitting a PR.
 
 ## License
 
