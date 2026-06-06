@@ -88,7 +88,7 @@ print(result.coeff_se)       # Standard errors
 print(result.P)              # Population class shares
 ```
 
-The formula syntax uses `cbind(var1, var2, ...)` on the left-hand side, or equivalently Python-style `var1 + var2 + ...`. The right-hand side is `~ 1` for intercept-only or `~ cov1 + cov2` for latent class regression. Parsing is handled by a lightweight custom parser (no external formula library).
+The formula syntax uses `cbind(var1, var2, ...)` on the left-hand side, or equivalently Python-style `var1 + var2 + ...`. The right-hand side is `~ 1` for intercept-only or `~ cov1 + cov2` for latent class regression.
 
 ## Backend
 
