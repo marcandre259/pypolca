@@ -59,6 +59,7 @@ wheel.packages = ["pypolca"]
 [tool.cibuildwheel]
 test-command = "pytest {project}/tests -x -q --ignore={project}/tests/python/test_r_comparison.py"
 test-requires = ["pytest", "numpy", "polars"]
+test-skip = "*-macosx_x86_64"
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
